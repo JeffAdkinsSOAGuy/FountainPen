@@ -1,0 +1,118 @@
+<title>FountainPen</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Instrument+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: a one-screen workbench. Outline rail on the left, the script as a sheet of paper on a desk on the right. */
+:root {
+  --desk: #e4e7ee; --panel: #f3f5f9; --paper: #ffffff; --ink: #1b2233; --muted: #5d6781;
+  --line: #cdd3df; --pen: #1d3fa8; --pen-soft: #e3e9fa; --warn: #a15400; --ok: #1c6b45;
+  --ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --script: "Courier Prime", "Courier New", Courier, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --desk: #10131b; --panel: #171b26; --paper: #1e2330; --ink: #e6e9f2; --muted: #98a2bb;
+  --line: #2f3647; --pen: #9db4ff; --pen-soft: #263156; --warn: #f0b062; --ok: #7ed0a4; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --desk: #10131b; --panel: #171b26; --paper: #1e2330; --ink: #e6e9f2; --muted: #98a2bb;
+  --line: #2f3647; --pen: #9db4ff; --pen-soft: #263156; --warn: #f0b062; --ok: #7ed0a4; color-scheme: dark }
+
+html, body { height: 100%; }
+body { background: var(--desk); color: var(--ink); font: 14px/1.45 var(--ui); display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--pen); outline-offset: 2px; }
+
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.brand { font-weight: 600; letter-spacing: -0.01em; color: var(--pen); }
+.doc { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; min-width: 0; flex: 1 1 200px; }
+#doc-title { font-weight: 600; }
+#doc-sample { font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 3px; padding: 0 6px; }
+#stats { color: var(--muted); font-variant-numeric: tabular-nums; }
+.tools { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.check { display: flex; align-items: center; gap: 6px; color: var(--muted); cursor: pointer; }
+.open { background: var(--pen); color: var(--paper); border-radius: 4px; padding: 6px 12px; font-weight: 500; cursor: pointer; }
+.open:focus-within { outline: 2px solid var(--pen); outline-offset: 2px; }
+.open input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.tabs { display: none; width: 100%; gap: 0; }
+.tabs button { flex: 1; padding: 7px; background: transparent; border: 1px solid var(--line); cursor: pointer; }
+.tabs button:first-child { border-radius: 4px 0 0 4px; } .tabs button:last-child { border-radius: 0 4px 4px 0; border-left: 0; }
+.tabs button[aria-pressed="true"] { background: var(--pen-soft); color: var(--pen); font-weight: 600; }
+
+.work { display: grid; grid-template-columns: minmax(260px, 360px) minmax(0, 1fr); min-height: 0; }
+.rail { background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; min-width: 0; padding: 12px 12px 32px; display: flex; flex-direction: column; gap: 12px; }
+#script { overflow-y: auto; min-width: 0; padding: 24px 16px 80px; }
+
+/* outline */
+.rail ol, .rail ul { list-style: none; margin: 0; padding: 0; }
+.hint { color: var(--muted); margin: 0; }
+.o-root, .o-section ol { display: flex; flex-direction: column; gap: 2px; }
+.o-section > details > summary { display: grid; grid-template-columns: 1fr auto; gap: 0 8px; align-items: baseline; cursor: pointer; padding: 8px 6px 4px; list-style: none; border-top: 1px solid var(--line); }
+.o-section > details > summary::-webkit-details-marker { display: none; }
+.o-level { grid-column: 1 / -1; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.o-level::before { content: "▾ "; } details:not([open]) > summary .o-level::before { content: "▸ "; }
+.o-title { font-weight: 600; font-size: 15px; text-wrap: balance; }
+.o-section.d1 > details > summary .o-title { font-size: 16px; }
+.o-count { grid-column: 1 / -1; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.o-syn { margin: 0 6px 6px; color: var(--muted); font-style: italic; }
+.o-id { font: 11px var(--script); color: var(--muted); }
+.o-scene, .o-beat { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: baseline; width: 100%; text-align: left; background: transparent; border: 0; border-radius: 4px; padding: 5px 6px; cursor: pointer; }
+.o-scene:hover, .o-beat:hover { background: var(--pen-soft); }
+.o-scene .o-text { font: 700 12.5px/1.35 var(--script); text-transform: uppercase; overflow-wrap: anywhere; }
+.o-scene.here { background: var(--pen-soft); } .o-scene.here .o-text { color: var(--pen); }
+.o-len { grid-column: 1 / -1; height: 3px; background: var(--line); border-radius: 2px; }
+.o-len i { display: block; height: 100%; background: var(--pen); border-radius: 2px; opacity: 0.55; }
+.o-beats { margin: 0 0 6px 10px !important; padding-left: 10px !important; border-left: 1px solid var(--line); }
+.o-beat { padding: 3px 6px; } .o-beat .o-text { color: var(--ink); overflow-wrap: anywhere; }
+.o-section .o-section > details > summary { padding-left: 6px; }
+#problems { font-size: 13px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); }
+#problems .ok { margin: 0; color: var(--ok); } #problems summary { color: var(--warn); font-weight: 600; cursor: pointer; }
+#problems ul { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+#problems button { background: transparent; border: 0; padding: 0; color: var(--pen); text-decoration: underline; cursor: pointer; }
+
+/* the page: 12pt Courier on a sheet, with screenplay indents in ch so they hold on any width */
+#page { background: var(--paper); max-width: 68ch; margin: 0 auto; padding: 48px clamp(16px, 6vw, 56px) 72px; border: 1px solid var(--line); box-shadow: 0 1px 0 var(--line); font: 15px/1.3 var(--script); box-sizing: content-box; }
+#page > * { margin: 0 0 1.3em; overflow-wrap: anywhere; scroll-margin-top: 16px; }
+.s-title { text-align: center; padding: 3em 0 4em; } .s-title h1 { font: 700 15px var(--script); text-transform: uppercase; text-decoration: underline; margin: 0 0 2em; } .s-title p { margin: 0; }
+.s-heading { font: 700 15px/1.3 var(--script); text-transform: uppercase; margin-top: 2.2em !important; }
+#page .s-character { margin: 0 0 0 min(20ch, 30%); text-transform: uppercase; }
+#page .s-paren { margin: 0 12ch 0 min(15ch, 22%); }
+#page .s-dialogue { margin: 0 min(10ch, 12%) 0 min(10ch, 15%); }
+#page .s-dialogue + :not(.s-paren):not(.s-dialogue), #page .s-paren + :not(.s-paren):not(.s-dialogue) { margin-top: 1.3em; }
+.s-transition { text-align: right; text-transform: uppercase; } .s-centered { text-align: center; }
+#page hr { border: 0; border-top: 1px dashed var(--line); }
+.m { font-family: var(--ui); font-size: 13px; color: var(--pen); }
+#page .m-section { font-weight: 600; font-size: 16px; letter-spacing: -0.01em; border-top: 1px solid var(--line); padding-top: 14px; margin: 2.4em 0 0.3em; }
+#page .m-section.d2, #page .m-section.d3 { font-size: 14px; }
+#page .m-syn { color: var(--muted); font-style: italic; margin-bottom: 1em; }
+#page .m-beat { margin: 1.6em 0 0.5em; display: flex; gap: 8px; align-items: baseline; }
+.m-beat span { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 3px; padding: 0 5px; flex: none; }
+#page .m-anchor { display: block; margin: 0; height: 0; }
+body[data-markup="off"] .m { display: none; }
+.flash { animation: flash 1.2s ease-out; }
+@keyframes flash { from { background: var(--pen-soft); } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .flash { animation: none; } }
+
+@media (max-width: 760px) {
+  .tabs { display: flex; }
+  .work { grid-template-columns: minmax(0, 1fr); }
+  body[data-pane="outline"] #script, body[data-pane="script"] .rail { display: none; }
+  .rail { border-right: 0; }
+  #page { padding-block: 28px 56px; font-size: 14px; }
+}
+</style>
+<header class="bar">
+  <span class="brand">FountainPen</span>
+  <div class="doc"><span id="doc-title"></span><span id="doc-sample" hidden>sample script</span><span id="stats"></span></div>
+  <div class="tools">
+    <label class="check" for="markup"><input type="checkbox" id="markup" checked> Show sequences and beats in the script</label>
+    <label class="open" for="file">Open script<input type="file" id="file" accept=".fountain,.txt,.spmd,text/plain"></label>
+  </div>
+  <div class="tabs" role="group" aria-label="View">
+    <button type="button" id="tab-outline" aria-pressed="true">Outline</button>
+    <button type="button" id="tab-script" aria-pressed="false">Script</button>
+  </div>
+</header>
+<main class="work">
+  <nav class="rail" aria-label="Outline"><div id="outline"></div><div id="problems"></div></nav>
+  <section id="script" aria-label="Script" tabindex="0"><article id="page"></article></section>
+</main>
+<script type="application/json" id="sample">__SAMPLE__</script>
+<script>__APP__</script>
