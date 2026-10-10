@@ -378,11 +378,19 @@ The game show set consists of a red outlined box on the floor and an electronic 
                 ARCHIBALD
     Let's show the real story.
 
+# Durand's Scheme
+
+[[id: q7]]
+
+= Weeks earlier, Barry talks Durand into proposing to someone he can sell.
+
 .INT. DURAND'S LIVING ROOM - DAY
 
 [[id: s8]]
 
 The apartment boasts a futuristic marvel, an entire wall transformed into an interactive digital canvas. Gleaming with advanced technology, the "monitor wall" seamlessly blends into the décor, defying conventional expectations. Its surface mimics the smooth texture of the surrounding walls, concealing its true nature until activated.
+
+[[goal: get rich on | id: rich | subject: DURAND | object: the show]]
 
 !DURAND FENWICK (mid-20s), an exceptionally handsome and charismatic man, sits on the couch, playing a video game. His chiseled features and magnetic presence draw immediate attention, leaving no doubt about his captivating allure. A hint of vulnerability lurks beneath his confident façade, adding depth to his enigmatic persona.
 
@@ -450,7 +458,7 @@ insert ring opening up
 
 !Realization creeps over Durand's face.
 
-[[goal: cash in | id: scheme | subject: DURAND | object: SUZIE | status: secret]]
+[[goal: cash in | id: scheme | subject: DURAND | object: SUZIE | for: rich | status: secret]]
 
                 DURAND
     You're a freaking genius! Your ability to twist the most innocent ideas into brilliant masterpieces of deception is sheer dark artistry! You Rock!
@@ -536,6 +544,10 @@ insert ring opening up
 Image freezes
 
             >CUT BACK TO TV SET:
+
+# The Boyfriend
+
+[[resume: q3]]
 
 .INT. GAME SHOW SET - CONTINUOUS
 
@@ -696,6 +708,8 @@ ARCHIBALD is standing beside SUZIE.
 
 [[status: abandoned | goal: cure]]
 
+[[goal: cash in | id: sell-nana | subject: SUZIE | object: NANA | for: money | from: cure]]
+
                 ARCHIBALD
     You know what I'm going to ask. 325,000 is a lot of money. Do we risk it for more?
 
@@ -843,6 +857,8 @@ ARCHIBALD is standing beside SUZIE.
     It's a million dollars! Yes!
 
 [[status: won | goal: corrupt]]
+
+[[status: won | goal: sell-nana]]
 
 !Archibald turns directly into the camera.
 

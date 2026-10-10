@@ -131,7 +131,25 @@ button.b-accept { background: var(--pen); border-color: var(--pen); color: var(-
 button.b-accept:hover { color: var(--paper); filter: brightness(1.1); }
 button:disabled { opacity: 0.45; cursor: not-allowed; }
 .p-acts button.b-link { border-color: transparent; color: var(--muted); padding-inline: 4px; text-decoration: underline; }
-.rail-tabs { display: flex; } .rail-tabs[hidden] { display: none; }
+.rail-tabs { display: flex; }
+.rail-tabs button + button { border-left: 0; border-radius: 0; } .rail-tabs button:last-of-type, .rail-tabs button:nth-last-child(2):has(+ [hidden]) { border-radius: 0 4px 4px 0; }
+/* spine: the arc as a checklist of stages */
+.o-spine { border-bottom: 1px solid var(--line); padding-bottom: 8px; margin-bottom: 4px; }
+.o-spine > summary { display: grid; grid-template-columns: 1fr; cursor: pointer; padding: 4px 6px; list-style: none; }
+.o-spine > summary::-webkit-details-marker { display: none; }
+.o-stage { display: grid; grid-template-columns: 1.6em minmax(0, 1fr) auto; gap: 6px; align-items: baseline; width: 100%; text-align: left; background: transparent; border: 0; border-radius: 4px; padding: 3px 6px; cursor: pointer; }
+.o-stage:hover:not(:disabled) { background: var(--pen-soft); }
+.o-stage .o-num { font: 11px var(--script); color: var(--pen); font-variant-numeric: tabular-nums; }
+.o-stage.missing { opacity: 1; cursor: default; } .o-stage.missing .o-text, .o-stage.missing .o-num { color: var(--muted); }
+.o-stage.missing .o-text { text-decoration: underline dotted; text-underline-offset: 3px; }
+.stage { font: 500 10.5px/1.5 var(--ui); letter-spacing: 0.04em; color: var(--ink); background: var(--pen-soft); border-radius: 3px; padding: 1px 6px; white-space: nowrap; }
+.o-stages { margin: 0 6px 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+/* goal tree */
+.o-tree, .o-tree ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.o-tree ul { margin-left: 8px !important; padding-left: 10px !important; border-left: 1px solid var(--line); }
+.o-tree > li { border-top: 1px solid var(--line); padding-top: 6px; }
+.o-tree > li > .o-goal .o-text { font-size: 14px; }
+.o-goal.closed .o-text > b { font-weight: 500; }
 .pane { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0; }
 .p-ledger { font-size: 13px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
 .p-ledger summary { cursor: pointer; font-weight: 600; } .p-ledger ul { display: flex; flex-direction: column; gap: 6px; margin-top: 8px !important; }
@@ -175,11 +193,13 @@ dialog::backdrop { background: rgb(10 14 24 / 0.55); }
 </header>
 <main class="work">
   <nav class="rail" aria-label="Outline">
-    <div class="tabs rail-tabs" id="rail-tabs" role="group" aria-label="Outline or proposals" hidden>
+    <div class="tabs rail-tabs" id="rail-tabs" role="group" aria-label="Outline, goals or proposals">
       <button type="button" id="tab-outline2" aria-pressed="true">Outline</button>
-      <button type="button" id="tab-proposals" aria-pressed="false">Proposals</button>
+      <button type="button" id="tab-goals" aria-pressed="false">Goals</button>
+      <button type="button" id="tab-proposals" aria-pressed="false" hidden>Proposals</button>
     </div>
     <div id="outline-pane" class="pane"><div id="outline"></div><div id="problems"></div></div>
+    <div id="goals-pane" class="pane" hidden></div>
     <div id="proposals" class="pane" hidden></div>
   </nav>
   <section id="script" aria-label="Script" tabindex="0"><article id="page"></article></section>

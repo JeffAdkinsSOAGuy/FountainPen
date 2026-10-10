@@ -3,7 +3,7 @@
 import { parseStructuredNote, isSceneHeading } from './parser';
 
 export type Kind = 'heading' | 'action' | 'character' | 'paren' | 'dialogue' | 'transition'
-  | 'centered' | 'section' | 'synopsis' | 'beat' | 'goal' | 'status' | 'id' | 'pagebreak';
+  | 'centered' | 'section' | 'synopsis' | 'beat' | 'goal' | 'status' | 'stage' | 'resume' | 'id' | 'pagebreak';
 export interface Block { kind: Kind; line: number; text: string; depth?: number; fields?: Record<string, string> }
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -35,8 +35,8 @@ export function blocks(text: string, bodyStart: number): Block[] {
 
     if (para.length === 1) {
       const note = parseStructuredNote(first);
-      if (note && (note.type === 'beat' || note.type === 'id' || note.type === 'goal' || note.type === 'status')) {
-        out.push({ kind: note.type, line: ln, text: note.value, fields: note.fields }); continue;
+      if (note && ['beat', 'id', 'goal', 'status', 'stage', 'resume'].includes(note.type)) {
+        out.push({ kind: note.type as Kind, line: ln, text: note.value, fields: note.fields }); continue;
       }
       const sec = /^(#+)\s*(.*)$/.exec(first);
       if (sec) { out.push({ kind: 'section', line: ln, text: sec[2], depth: sec[1].length }); continue; }

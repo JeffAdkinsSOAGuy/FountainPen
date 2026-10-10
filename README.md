@@ -2,9 +2,9 @@
 
 A script editor built on [Fountain Cascade](https://github.com/JeffAdkinsSOAGuy/fountain-cascade), an extension of the Fountain screenplay syntax.
 
-**Status:** early. It opens a script and shows its drama beside the text: sequences, the goals in play in each, and the beats, with scene headings as quiet markers between them. Its beat agent reads a whole script and proposes goals, sequences, and beats for you to accept, edit, or reject. You cannot yet edit the script text itself.
+**Status:** early. It opens a script and shows its drama beside the text: sequences (including ones that pause and resume), the goals in play in each, and the beats, with scene headings as quiet markers between them. A Goals tab shows the goal tree, and a script that names a spine, such as the Hero's Journey, gets a checklist of its stages. A plot written with no script text opens the same way. Its beat agent reads a whole script and proposes goals, sequences, and beats for you to accept, edit, or reject. You cannot yet edit the script text itself.
 
-**Supports:** Fountain Cascade v0.2.
+**Supports:** Fountain Cascade v0.3.
 
 ## Run it
 
@@ -39,6 +39,7 @@ npm test
 | Path | What it is |
 |---|---|
 | `src/parser.ts` | The Cascade parser. Text in; sections, scenes, goals with their status history, beats, IDs, and markup problems out. No dependencies. |
+| `src/spines.ts` | The library of spines and their stages. |
 | `src/render.ts` | Lays script lines out for display (scene heading, action, dialogue). Display only. |
 | `src/agent.ts` | The beat agent: its instructions, the API call, and the checks on what comes back. |
 | `src/edit.ts` | Writes accepted proposals into a script as Cascade notes. |
@@ -51,6 +52,7 @@ npm test
 
 - Editing the script text, or moving and deleting existing marks
 - Keeping unreviewed proposals between sessions
-- Story spines (planned for Cascade v0.3)
+- A plot view you can write in: adding and linking goals, sequences, beats, and stages by hand
+- The beat agent proposing goal links, resumed sequences, and stages
 - Co-writer alternatives (planned for Cascade v0.4)
 - A desktop wrapper

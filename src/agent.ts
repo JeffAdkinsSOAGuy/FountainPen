@@ -15,7 +15,7 @@ export interface Part { from: number; to: number; words: number; scenes: number 
 const lines = (text: string) => text.replace(/\r\n?/g, '\n').split('\n');
 const isMarkup = (t: string) => {
   const n = parseStructuredNote(t);
-  return (n !== null && ['id', 'goal', 'status', 'beat'].includes(n.type)) || /^#+\s/.test(t) || /^=(?!=)/.test(t);
+  return (n !== null && ['id', 'resume', 'stage', 'goal', 'status', 'beat'].includes(n.type)) || /^#+\s/.test(t) || /^=(?!=)/.test(t);
 };
 const walk = (nodes: Item[], type: string): any[] =>
   nodes.flatMap(c => [...(c.type === type ? [c] : []), ...(c.type === 'section' ? walk(c.children, type) : [])]);

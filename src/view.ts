@@ -27,6 +27,46 @@ const walk = <T extends Item>(nodes: Item[], type: T['type']): T[] =>
 function goalSentence(g: Goal): string {
   return `<b>${esc(g.subject.join(' and ') || 'Someone')}</b> ${g.subject.length > 1 ? 'want' : 'wants'} to ${inline(g.want)}${g.object ? ` <b>${esc(g.object)}</b>` : ''}`;
 }
+const stageName = (ref: string) => { const id = ref.split('/').pop()!.trim();
+  for (const sp of doc.spines) { const st = sp.stages.find(x => x.id === id); if (st) return st.name; } return id; };
+const stageChip = (ref: string) => `<span class="stage">${esc(stageName(ref))}</span>`;
+
+/** Every place each stage of the script's spines is attached, as line numbers. */
+function stageUse(): Map<string, number[]> {
+  const use = new Map<string, number[]>();
+  const add = (ref: string, line: number) => { const id = ref.split('/').pop()!.trim(); use.set(id, [...(use.get(id) ?? []), line]); };
+  walk<any>(doc.children, 'section').forEach(s => s.stages.forEach((r: string) => add(r, s.line)));
+  beatList.forEach(b => { if (b.stage) add(b.stage, b.line); });
+  return use;
+}
+
+/** The spine as a checklist: its stages in order, each showing whether the script has reached it. */
+function spinesHtml(): string {
+  const use = stageUse();
+  return doc.spines.map(sp => `<details class="o-spine" open><summary><span class="o-level">spine</span><span class="o-title">${esc(sp.name)}</span>
+    <span class="o-count">${sp.stages.filter(st => use.has(st.id)).length} of ${plural(sp.stages.length, 'stage')} placed</span></summary>
+    <ol>${sp.stages.map((st, i) => { const at = use.get(st.id);
+      return `<li><button class="o-stage${at ? '' : ' missing'}" ${at ? `data-line="${at[0]}"` : 'disabled'} title="${esc(st.about ?? '')}">
+        <span class="o-num">${i + 1}</span><span class="o-text">${esc(st.name)}</span><span class="o-id">${at ? (at.length > 1 ? at.length + ' places' : '') : 'not placed'}</span></button></li>`; }).join('')}</ol></details>`).join('');
+}
+
+/** The goal tree: top-level goals, with the goals that serve them beneath. */
+function goalTreeHtml(): string {
+  if (!doc.goals.length) return '<p class="hint">No goals are marked in this script yet.</p>';
+  const kids = (id?: string) => doc.goals.filter(g => (g.for && doc.goals.some(x => x.id === g.for) ? g.for : undefined) === id);
+  const row = (g: Goal): string => {
+    const origin = g.from ? doc.goals.find(x => x.id === g.from) : undefined;
+    const open = g.status === 'secret' || g.status === 'active';
+    return `<li><button class="o-goal${open ? '' : ' closed'}" data-line="${g.line}"><span class="o-text">${goalSentence(g)}${
+      origin ? ` <span class="o-for">${origin.status === 'abandoned' ? 'replaced' : 'raised from'} “${goalSentence(origin).replace(/<[^>]+>/g, '')}”</span>` : ''}</span>
+      <span class="o-steps">${g.history.map(h => statusChip(h.status)).join('<span class="arrow">→</span>')}</span></button>
+      ${kids(g.id).length ? `<ul>${kids(g.id).map(row).join('')}</ul>` : ''}</li>`;
+  };
+  const top = kids(undefined), live = doc.goals.filter(g => g.status === 'secret' || g.status === 'active').length;
+  return `<p class="hint">${plural(top.length, 'top-level goal')}, ${doc.goals.length - top.length} serving ${top.length === 1 ? 'it' : 'them'}. ${live ? `${live} still open at the end.` : 'All resolved by the end.'}</p>
+    <ul class="o-tree">${top.map(row).join('')}</ul>`;
+}
+
 const statusChip = (s: string) => `<span class="st st-${s}">${s}</span>`;
 
 /** Goals in play in a stretch of script: declared there, or changing status there. */
@@ -54,17 +94,18 @@ function itemHtml(node: Item): string {
       const across = node.scenes.length > 1 ? `<span class="o-across">runs through ${node.scenes.length} scenes</span>` : '';
       return `<li><button class="o-beat" data-line="${node.line}" data-end="${node.endLine}">
         <span class="o-text">${inline(node.text)}</span>${node.id ? `<span class="o-id">${esc(node.id)}</span>` : ''}
-        <span class="o-meta">${node.ahead ? `<span class="o-ahead">${esc(node.ahead)} ahead</span>` : ''}${across}</span>
+        <span class="o-meta">${node.stage ? stageChip(node.stage) : ''}${node.ahead ? `<span class="o-ahead">${esc(node.ahead)} ahead</span>` : ''}${across}</span>
         <span class="o-len" title="${len} lines"><i style="width:${Math.max(4, Math.round((len / longest) * 100))}%"></i></span>
       </button></li>`;
     }
     case 'section': {
       const ns = walk<Scene>(node.children, 'scene').length, nb = walk<Beat>(node.children, 'beat').length;
       return `<li class="o-section d${Math.min(node.depth, 3)}"><details open>
-        <summary><span class="o-level">${esc(node.level ?? 'section')}</span>
+        <summary><span class="o-level">${esc(node.level ?? 'section')}${node.resumes ? ', resumed' : ''}</span>
           <span class="o-title" data-line="${node.line}">${esc(node.title)}</span>${node.id ? `<span class="o-id">${esc(node.id)}</span>` : ''}
           <span class="o-count">${plural(nb, 'beat')} · ${plural(ns, 'scene')}</span></summary>
         ${node.synopsis ? `<p class="o-syn">${inline(node.synopsis)}</p>` : ''}
+        ${node.stages.length ? `<p class="o-stages">${node.stages.map(stageChip).join('')}</p>` : ''}
         ${node.children.some(c => c.type === 'section') ? '' : goalsHtml(node.line, node.endLine)}
         <ol>${node.children.map(itemHtml).join('')}</ol></details></li>`;
     }
@@ -93,7 +134,7 @@ function render(toTop = false) {
   const loose = doc.children.some(c => c.type === 'goal' || c.type === 'status') ? goalsHtml(doc.bodyStart, doc.lineCount) : '';
   $('outline').innerHTML =
     (plain ? `<p class="hint">This is plain Fountain: no sequences, goals, or beats are marked yet, so the outline lists scenes only.</p>` : '') +
-    (st.sections ? '' : loose) +
+    spinesHtml() + (st.sections ? '' : loose) +
     (st.scenes || st.beats ? `<ol class="o-root">${doc.children.map(itemHtml).join('')}</ol>` : `<p class="hint">No scene headings were found in this file.</p>`);
 
   const d = doc.diagnostics;
@@ -120,6 +161,8 @@ function render(toTop = false) {
         const g = doc.goals.find(x => x.id === b.fields?.['goal']);
         return `<p class="m m-goal" ${a}><span>goal</span><span>${g ? goalSentence(g) : esc(b.fields?.['goal'] ?? '')} ${statusChip(b.text)}</span></p>`;
       }
+      case 'stage': return `<p class="m m-goal" ${a}><span>stage</span><span>${esc(stageName(b.text))}</span></p>`;
+      case 'resume': return `<p class="m m-syn" ${a}>Resumes the sequence from earlier.</p>`;
       case 'id': return `<span class="m-anchor" ${a}></span>`;
       case 'pagebreak': return `<hr ${a}>`;
       case 'heading': return `<h2 class="s-heading" ${a}>${inline(b.text)}</h2>`;
@@ -128,6 +171,8 @@ function render(toTop = false) {
   }).join('');
   if (toTop) $('script').scrollTop = 0;
   $('save').hidden = !dirty;
+  $('goals-pane').innerHTML = goalTreeHtml();
+  $('tab-goals').textContent = `Goals (${doc.goals.length})`;
   renderProposals();
   spy();
 }
@@ -151,9 +196,9 @@ function proposalHtml(p: Proposal, i: number): string {
 
 function renderProposals() {
   const has = pending.length > 0 || agents.length > 0 || notes.length > 0 || rawReply !== '';
-  $('rail-tabs').hidden = !has;
+  $('tab-proposals').hidden = !has;
   $('tab-proposals').textContent = `Proposals (${pending.length})`;
-  if (!has) { setRail('outline'); $('proposals').innerHTML = ''; return; }
+  if (!has) { if (!$('proposals').hidden) setRail('outline'); $('proposals').innerHTML = ''; return; }
   // group by sequence: existing sequence sections, or sequences the agent proposes
   const marks: Array<{ line: number; title: string; proposed: boolean }> = [
     ...walk<any>(doc.children, 'section').filter(s => !s.children.some((c: Item) => c.type === 'section')).map(s => ({ line: s.line, title: s.title, proposed: false })),
@@ -201,8 +246,10 @@ function reject(i: number) {
   renderProposals();
 }
 
-function setRail(which: 'outline' | 'proposals') {
+function setRail(which: 'outline' | 'goals' | 'proposals') {
   $('outline-pane').hidden = which !== 'outline';
+  $('goals-pane').hidden = which !== 'goals';
+  $('tab-goals').setAttribute('aria-pressed', String(which === 'goals'));
   $('proposals').hidden = which !== 'proposals';
   $('tab-outline2').setAttribute('aria-pressed', String(which === 'outline'));
   $('tab-proposals').setAttribute('aria-pressed', String(which === 'proposals'));
@@ -300,7 +347,7 @@ function readFile(f: File | undefined) {
 function start() {
   document.addEventListener('click', e => {
     const el = (e.target as HTMLElement).closest<HTMLElement>('[data-line]');
-    if (el && (el.closest('#outline') || el.closest('#problems') || el.closest('#proposals'))) { e.preventDefault(); goTo(Number(el.dataset.line)); }
+    if (el && (el.closest('.rail'))) { e.preventDefault(); goTo(Number(el.dataset.line)); }
   });
   $('script').addEventListener('scroll', () => requestAnimationFrame(spy), { passive: true });
   $<HTMLInputElement>('file').addEventListener('change', e => readFile((e.target as HTMLInputElement).files?.[0]));
@@ -316,6 +363,7 @@ function start() {
     if (p && t.dataset.f) p[t.dataset.f] = t.value;
   });
   $('tab-outline2').addEventListener('click', () => setRail('outline'));
+  $('tab-goals').addEventListener('click', () => setRail('goals'));
   $('tab-proposals').addEventListener('click', () => setRail('proposals'));
   $('find').addEventListener('click', () => {
     $('agent-size').textContent = `${doc.lineCount.toLocaleString()} lines`;

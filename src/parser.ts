@@ -1,20 +1,24 @@
-// Fountain Cascade parser (spec v0.2).
+// Fountain Cascade parser (spec v0.3).
 // Reads a .fountain file and returns its Cascade structure.
 //   Physical cut: scenes (place and time).
 //   Dramatic cut: sequences, goals, and beats. Beats may cross scene headings.
 // It does not classify dialogue or action; see render.ts for display.
 // Line numbers are 1-based.
 
+import { LIBRARY, Spine } from './spines';
+
 export interface Diagnostic { line: number; message: string }
 
 export type GoalStatus = 'secret' | 'active' | 'won' | 'lost' | 'abandoned';
 export interface Goal {
-  type: 'goal'; id: string; want: string; subject: string[]; object?: string; for?: string;
+  type: 'goal'; id: string; want: string; subject: string[]; object?: string;
+  /** The goal this one serves: its parent in the goal tree. */ for?: string;
+  /** The goal this one grew out of (raised from it, or replacing it). */ from?: string;
   line: number; history: Array<{ status: GoalStatus; line: number }>; status: GoalStatus;
 }
 export interface StatusChange { type: 'status'; goal: string; status: GoalStatus; line: number }
 export interface Beat {
-  type: 'beat'; text: string; id?: string; ahead?: string; line: number; endLine: number;
+  type: 'beat'; text: string; id?: string; ahead?: string; stage?: string; line: number; endLine: number;
   /** Heading lines of the scenes this beat runs through, in order. */
   scenes: number[];
   fields: Record<string, string>;
@@ -24,6 +28,8 @@ export type Item = Section | Scene | Beat | Goal | StatusChange;
 export interface Section {
   type: 'section'; depth: number; level?: string; title: string; id?: string;
   synopsis?: string; line: number; endLine: number;
+  /** Set when this section continues an earlier sequence: that sequence's ID. */ resumes?: string;
+  /** Stages of the script's spine attached to this sequence. */ stages: string[];
   /** Everything inside the section, in script order. */
   children: Item[];
 }
@@ -31,6 +37,7 @@ export interface StructuredNote { type: string; value: string; fields: Record<st
 export interface CascadeDoc {
   titlePage: Record<string, string>;
   levels: string[];
+  /** The spines the script names, with their stages in order. */ spines: Spine[];
   bodyStart: number;
   lineCount: number;
   children: Item[];
@@ -41,7 +48,7 @@ export interface CascadeDoc {
 
 const ID_RE = /^[a-z0-9-]{1,32}$/;
 const SCENE_RE = /^(INT\.?\/EXT|INT|EXT|EST|I\/E)[.\s]/i;
-const TYPES = new Set(['id', 'goal', 'status', 'beat']);
+const TYPES = new Set(['id', 'resume', 'stage', 'goal', 'status', 'beat']);
 const STATUSES = new Set(['secret', 'active', 'won', 'lost', 'abandoned']);
 const CLOSED = new Set(['won', 'lost', 'abandoned']);
 
@@ -81,12 +88,30 @@ export function parseTitlePage(lines: string[]): { titlePage: Record<string, str
   return { titlePage, bodyStart: i + 1 };
 }
 
+/** Read the Spine title-page key: library spine IDs, or "custom" followed by "id: Name" lines. */
+export function parseSpines(value: string | undefined): { spines: Spine[]; unknown: string[] } {
+  const spines: Spine[] = [], unknown: string[] = [];
+  if (!value) return { spines, unknown };
+  const [first, ...rest] = value.split('\n');
+  for (const id of first.split(',').map(s => s.trim().toLowerCase()).filter(Boolean)) {
+    if (id === 'custom') {
+      const stages = rest.map(l => /^([a-z0-9-]+)\s*:\s*(.+)$/.exec(l.trim())).filter(Boolean).map(m => ({ id: m![1], name: m![2].trim() }));
+      spines.push({ id: 'custom', name: 'Custom spine', stages });
+    } else if (LIBRARY[id]) spines.push(LIBRARY[id]);
+    else unknown.push(id);
+  }
+  return { spines, unknown };
+}
+
 export function parse(text: string): CascadeDoc {
   const lines = text.replace(/\r\n?/g, '\n').split('\n');
   const n = lines.length;
   const { titlePage, bodyStart } = parseTitlePage(lines);
   const levels = (titlePage['structure'] ?? '').split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
   const diagnostics: Diagnostic[] = [];
+  const { spines, unknown: unknownSpines } = parseSpines(titlePage['spine']);
+  const sequenceById = new Map<string, Section>();
+  let stageTarget: Section | null = null;        // section still open to stage notes (nothing but notes since its heading)
   const root: Item[] = [];
   const stack: Section[] = [];
   const ids = new Map<string, number>();
@@ -108,6 +133,13 @@ export function parse(text: string): CascadeDoc {
     if (ids.has(id)) { problem(ln, `ID "${id}" is already used on line ${ids.get(id)}.`); return false; }
     ids.set(id, ln); stats.ids++; return true;
   };
+  const stageOk = (ref: string, ln: number): boolean => {
+    if (!spines.length) { problem(ln, 'This script names no spine in its title page, so this stage has nothing to refer to. Add a "Spine:" line.'); return false; }
+    const [a, b] = ref.includes('/') ? ref.split('/') : [undefined, ref];
+    const pool = a ? spines.filter(sp => sp.id === a.trim()) : spines;
+    if (!pool.some(sp => sp.stages.some(st => st.id === (b ?? '').trim()))) { problem(ln, `"${ref}" is not a stage of ${spines.map(sp => sp.name).join(' or ')}.`); return false; }
+    return true;
+  };
   const closeBeat = (end: number) => { if (beat) { beat.endLine = end; beat = null; } };
   const closeScene = (end: number) => { if (scene) { scene.endLine = end; scene = null; } };
 
@@ -124,7 +156,19 @@ export function parse(text: string): CascadeDoc {
       if (note.type === 'id') {
         if (!idTarget) problem(ln, 'This id note does not follow a section or scene heading.');
         else if (idTarget.id) problem(ln, 'This heading already has an ID.');
-        else if (claimId(note.value, ln)) idTarget.id = note.value;
+        else if (claimId(note.value, ln)) { idTarget.id = note.value; if (idTarget.type === 'section') sequenceById.set(note.value, idTarget); }
+        continue;
+      }
+      if (note.type === 'resume') {
+        if (!idTarget || idTarget.type !== 'section') problem(ln, 'A resume note goes directly under a sequence heading.');
+        else if (idTarget.id) problem(ln, 'This heading already has an ID, so it starts a sequence of its own and cannot resume another.');
+        else if (!sequenceById.has(note.value)) problem(ln, `No earlier sequence has the ID "${note.value}".`);
+        else { idTarget.resumes = note.value; if (idTarget.level === 'sequence') stats.sequences--; idTarget = null; }
+        continue;
+      }
+      if (note.type === 'stage') {
+        if (!stageTarget) problem(ln, 'A stage note goes directly under a sequence heading. To attach a stage to a beat, add "| stage: ..." to the beat note.');
+        else if (stageOk(note.value, ln)) stageTarget.stages.push(note.value);
         continue;
       }
       idTarget = null;                     // goal, status and beat notes may sit between a section and its synopsis
@@ -140,8 +184,9 @@ export function parse(text: string): CascadeDoc {
         const g: Goal = {
           type: 'goal', id: f['id'], want: note.value, line: ln, status,
           subject: (f['subject'] ?? '').split(',').map(s => s.trim()).filter(Boolean),
-          object: f['object'] || undefined, for: f['for'] || undefined, history: [{ status, line: ln }],
+          object: f['object'] || undefined, for: f['for'] || undefined, from: f['from'] || undefined, history: [{ status, line: ln }],
         };
+        for (const k of ['for', 'from'] as const) if (g[k] && !goalById.has(g[k]!)) problem(ln, `Goal "${g.id}" names "${g[k]}" in its ${k} field, but no goal with that ID has been declared before it.`);
         goals.push(g); goalById.set(g.id, g); here().push(g); stats.goals++;
       } else if (note.type === 'status') {
         const g = goalById.get(f['goal'] ?? '');
@@ -154,25 +199,26 @@ export function parse(text: string): CascadeDoc {
           here().push({ type: 'status', goal: g.id, status: g.status, line: ln });
         }
       } else {
-        synTarget = null;
+        synTarget = null; stageTarget = null;
         closeBeat(ln - 1);
         beat = { type: 'beat', text: note.value, line: ln, endLine: ln, fields: f, ahead: f['ahead'] || undefined, scenes: scene ? [scene.line] : [] };
         if (f['id'] && claimId(f['id'], ln)) beat.id = f['id'];
+        if (f['stage'] && stageOk(f['stage'], ln)) beat.stage = f['stage'];
         here().push(beat); stats.beats++;
       }
       continue;
     }
-    if (/\[\[\s*(id|beat|goal|status)\s*:/.test(t)) problem(ln, 'A Cascade note must be alone on its line.');
+    if (/\[\[\s*(id|beat|goal|status|resume|stage)\s*:/.test(t)) problem(ln, 'A Cascade note must be alone on its line.');
 
     const sec = /^(#+)\s*(.*)$/.exec(t);
     if (sec) {
       closeBeat(ln - 1);                                // 9.2: a beat ends with its sequence; the scene, being physical, carries on
       const depth = sec[1].length;
       while (stack.length && stack[stack.length - 1].depth >= depth) stack.pop()!.endLine = ln - 1;
-      const s: Section = { type: 'section', depth, level: levels[depth - 1], title: sec[2].trim(), line: ln, endLine: ln, children: [] };
+      const s: Section = { type: 'section', depth, level: levels[depth - 1], title: sec[2].trim(), line: ln, endLine: ln, children: [], stages: [] };
       here().push(s); stack.push(s); stats.sections++;
       if (s.level === 'sequence') stats.sequences++;
-      idTarget = s; synTarget = s;
+      idTarget = s; synTarget = s; stageTarget = s;
       continue;
     }
     const syn = /^=(?!=)\s*(.*)$/.exec(t);
@@ -187,16 +233,16 @@ export function parse(text: string): CascadeDoc {
       scene = { type: 'scene', heading: heading.trim(), number, line: ln, endLine: ln };
       here().push(scene); stats.scenes++;
       if (beat) beat.scenes.push(ln);
-      idTarget = scene; synTarget = null;
+      idTarget = scene; synTarget = null; stageTarget = null;
       continue;
     }
-    idTarget = null; synTarget = null;
+    idTarget = null; synTarget = null; stageTarget = null;
   }
   closeBeat(n); closeScene(n);
   while (stack.length) stack.pop()!.endLine = n;
-  for (const g of goals) if (g.for && !goalById.has(g.for)) problem(g.line, `Goal "${g.id}" says it is for "${g.for}", but no goal has that ID.`);
+  for (const id of unknownSpines) problem(1, `The spine "${id}" is not one FountainPen knows. Known spines: ${Object.keys(LIBRARY).join(', ')}, or "custom".`);
   if (stats.sections && !levels.length)
     problem(1, 'This script has sections but no "Structure:" line in its title page, so they have no Cascade meaning.');
   diagnostics.sort((a, b) => a.line - b.line);
-  return { titlePage, levels, bodyStart, lineCount: n, children: root, goals, diagnostics, stats };
+  return { titlePage, levels, spines, bodyStart, lineCount: n, children: root, goals, diagnostics, stats };
 }

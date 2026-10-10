@@ -8,7 +8,7 @@ import { apply } from '../dist/edit.mjs';
 const read = f => readFileSync(new URL('./fixtures/' + f, import.meta.url), 'utf8');
 const plain = read('moral-dilemma-plain.fountain');
 const reply = read('agent-reply.jsonl');           // a real model reply to the agent's prompt
-const strip = t => t.split('\n').filter(l => l !== '' && !/^(\[\[(id|beat|goal|status):.*\]\]|#+ .*|= .*|Structure: .*)$/.test(l)).join('\n');
+const strip = t => t.split('\n').filter(l => l !== '' && !/^(\[\[(id|beat|goal|status|resume|stage):.*\]\]|#+ .*|= .*|Structure: .*)$/.test(l)).join('\n');
 const all = (n, type) => n.flatMap(c => [...(c.type === type ? [c] : []), ...(c.type === 'section' ? all(c.children, type) : [])]);
 
 test('marks may only go before the start of a paragraph of script text', () => {
