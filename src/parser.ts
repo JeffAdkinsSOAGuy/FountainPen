@@ -166,7 +166,7 @@ export function parse(text: string): CascadeDoc {
 
     const sec = /^(#+)\s*(.*)$/.exec(t);
     if (sec) {
-      closeBeat(ln - 1); closeScene(ln - 1);          // 9.2: a beat ends with its sequence
+      closeBeat(ln - 1);                                // 9.2: a beat ends with its sequence; the scene, being physical, carries on
       const depth = sec[1].length;
       while (stack.length && stack[stack.length - 1].depth >= depth) stack.pop()!.endLine = ln - 1;
       const s: Section = { type: 'section', depth, level: levels[depth - 1], title: sec[2].trim(), line: ln, endLine: ln, children: [] };

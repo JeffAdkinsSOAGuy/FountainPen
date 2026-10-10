@@ -2,7 +2,7 @@
 
 A script editor built on [Fountain Cascade](https://github.com/JeffAdkinsSOAGuy/fountain-cascade), an extension of the Fountain screenplay syntax.
 
-**Status:** first slice. It opens a script and shows its drama beside the text: sequences, the goals in play in each, and the beats, with scene headings as quiet markers between them. It does not edit yet.
+**Status:** early. It opens a script and shows its drama beside the text: sequences, the goals in play in each, and the beats, with scene headings as quiet markers between them. Its beat agent reads a whole script and proposes goals, sequences, and beats for you to accept, edit, or reject. You cannot yet edit the script text itself.
 
 **Supports:** Fountain Cascade v0.2.
 
@@ -17,6 +17,17 @@ npm run build
 
 Then open `dist/fountainpen.html` in a browser. Use **Open script**, or drag a `.fountain` file onto the page. The file is read in the browser and is not sent anywhere.
 
+## The beat agent
+
+**Find beats** sends the whole script to Claude through Anthropic's API, using your own API key, and asks where the drama turns. It works from the definitions in the Cascade specification: agents, goals and their status, sequences, and beats.
+
+- What comes back is a list of proposals, each with its reason, grouped by sequence.
+- Accept or reject each one, edit a beat's wording or a sequence's title first if you like, or accept a whole sequence at once.
+- Accepting writes a Cascade note into the script. The script's own text is never changed.
+- **Save changes** writes the file back to disk.
+
+The key is sent only to `api.anthropic.com`, and is kept in the browser only if you tick the box. Each run is billed to your key. This only works from your own built copy, not from a hosted preview.
+
 ## Test it
 
 ```
@@ -29,15 +40,17 @@ npm test
 |---|---|
 | `src/parser.ts` | The Cascade parser. Text in; sections, scenes, goals with their status history, beats, IDs, and markup problems out. No dependencies. |
 | `src/render.ts` | Lays script lines out for display (scene heading, action, dialogue). Display only. |
-| `src/view.ts` | The outline view. |
+| `src/agent.ts` | The beat agent: its instructions, the API call, and the checks on what comes back. |
+| `src/edit.ts` | Writes accepted proposals into a script as Cascade notes. |
+| `src/view.ts` | The outline, the proposals panel, and saving. |
 | `src/page.html` | The page and its styles. |
 | `build.mjs` | Bundles everything into the single file `dist/fountainpen.html`. |
-| `test/` | Parser tests, run against a complete marked-up script. |
+| `test/` | Tests for the parser, the agent's checks, and the editing, run against a complete script and a recorded model reply. |
 
 ## Not built yet
 
-- Editing the script or the markup
-- The beat agent: an AI pass that reads a whole script and proposes goals, sequences, and beats for you to accept or reject
+- Editing the script text, or moving and deleting existing marks
+- Keeping unreviewed proposals between sessions
 - Story spines (planned for Cascade v0.3)
 - Co-writer alternatives (planned for Cascade v0.4)
 - A desktop wrapper

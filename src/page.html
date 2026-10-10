@@ -121,12 +121,50 @@ body[data-markup="off"] .m { display: none; }
   .rail { border-right: 0; }
   #page { padding-block: 28px 56px; font-size: 14px; }
 }
+
+/* beat agent: buttons, proposals, dialog */
+.btn, .p-acts button, .d-acts button, .p-group header button { border: 1px solid var(--line); border-radius: 4px; padding: 5px 10px; cursor: pointer; font-weight: 500; }
+.btn, .p-acts button:not(.b-accept), .d-acts button:not(.b-accept) { background: transparent; }
+.btn:hover, .p-acts button:hover, .d-acts button:hover { border-color: var(--pen); color: var(--pen); }
+#save { border-color: var(--warn); color: var(--warn); }
+button.b-accept { background: var(--pen); border-color: var(--pen); color: var(--paper); }
+button.b-accept:hover { color: var(--paper); filter: brightness(1.1); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+.p-acts button.b-link { border-color: transparent; color: var(--muted); padding-inline: 4px; text-decoration: underline; }
+.rail-tabs { display: flex; } .rail-tabs[hidden] { display: none; }
+.pane { display: flex; flex-direction: column; gap: 12px; flex: 1; min-width: 0; }
+.p-ledger { font-size: 13px; border-bottom: 1px solid var(--line); padding-bottom: 8px; }
+.p-ledger summary { cursor: pointer; font-weight: 600; } .p-ledger ul { display: flex; flex-direction: column; gap: 6px; margin-top: 8px !important; }
+.p-notes summary { color: var(--warn); }
+.p-group { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding-top: 8px; }
+.p-group header { display: flex; justify-content: space-between; align-items: flex-end; gap: 8px; flex-wrap: wrap; }
+.p-group header div { display: flex; flex-direction: column; min-width: 0; }
+.p-group ol { display: flex; flex-direction: column; gap: 6px; }
+.p-item { display: grid; grid-template-columns: 4.6em minmax(0, 1fr); gap: 8px; align-items: start; padding: 8px; border: 1px dashed var(--line); border-radius: 4px; background: var(--paper); }
+.p-kind { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pen); padding-top: 4px; }
+.p-body { display: flex; flex-direction: column; gap: 5px; min-width: 0; overflow-wrap: anywhere; }
+.p-edit { width: 100%; box-sizing: border-box; background: transparent; border: 0; border-bottom: 1px solid var(--line); padding: 2px 0; font-weight: 500; }
+.p-edit.p-title { font-weight: 600; font-size: 15px; }
+.p-why { color: var(--muted); font-size: 12.5px; }
+.p-acts { display: flex; flex-wrap: wrap; gap: 6px; }
+.p-acts button { padding: 3px 9px; font-size: 13px; }
+dialog { background: var(--paper); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; padding: 0; width: min(480px, calc(100% - 32px)); }
+dialog::backdrop { background: rgb(10 14 24 / 0.55); }
+#agent-form { display: flex; flex-direction: column; gap: 10px; padding: 22px; }
+#agent-form h2 { margin: 0; font-size: 18px; letter-spacing: -0.01em; text-wrap: balance; }
+#agent-form p { margin: 0; } #agent-form > label:not(.check) { font-weight: 600; margin-top: 4px; }
+#agent-form input[type="password"], #agent-form input[type="text"] { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 7px 9px; font-family: var(--script); min-width: 0; }
+.fine { color: var(--muted); font-size: 12.5px; }
+#agent-status { color: var(--pen); min-height: 1.45em; }
+.d-acts { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 </style>
 <header class="bar">
   <span class="brand">FountainPen</span>
   <div class="doc"><span id="doc-title"></span><span id="doc-sample" hidden>sample script</span><span id="stats"></span></div>
   <div class="tools">
     <label class="check" for="markup"><input type="checkbox" id="markup" checked> Show sequences, goals and beats in the script</label>
+    <button type="button" class="btn" id="save" hidden>Save changes</button>
+    <button type="button" class="btn" id="find">Find beats</button>
     <label class="open" for="file">Open script<input type="file" id="file" accept=".fountain,.txt,.spmd,text/plain"></label>
   </div>
   <div class="tabs" role="group" aria-label="View">
@@ -135,8 +173,34 @@ body[data-markup="off"] .m { display: none; }
   </div>
 </header>
 <main class="work">
-  <nav class="rail" aria-label="Outline"><div id="outline"></div><div id="problems"></div></nav>
+  <nav class="rail" aria-label="Outline">
+    <div class="tabs rail-tabs" id="rail-tabs" role="group" aria-label="Outline or proposals" hidden>
+      <button type="button" id="tab-outline2" aria-pressed="true">Outline</button>
+      <button type="button" id="tab-proposals" aria-pressed="false">Proposals</button>
+    </div>
+    <div id="outline-pane" class="pane"><div id="outline"></div><div id="problems"></div></div>
+    <div id="proposals" class="pane" hidden></div>
+  </nav>
   <section id="script" aria-label="Script" tabindex="0"><article id="page"></article></section>
 </main>
+<dialog id="agent-dialog" aria-labelledby="agent-h">
+  <form id="agent-form" method="dialog">
+    <h2 id="agent-h">Find goals, sequences and beats</h2>
+    <p>FountainPen sends the whole script (<span id="agent-size"></span>) to Claude through Anthropic's API and asks where the drama turns. What comes back are proposals. Nothing is written to your script until you accept it.</p>
+    <label for="api-key">Your Anthropic API key</label>
+    <input type="password" id="api-key" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
+    <label class="check" for="api-remember"><input type="checkbox" id="api-remember"> Remember this key in this browser</label>
+    <label for="api-model">Model</label>
+    <input type="text" id="api-model" list="api-models" value="claude-sonnet-5-5" spellcheck="false">
+    <datalist id="api-models"><option value="claude-sonnet-5-5"></option><option value="claude-opus-5-5"></option><option value="claude-haiku-4-5-20251001"></option></datalist>
+    <p class="fine">The run is billed to your key. The key goes only to api.anthropic.com.</p>
+    <p id="agent-status" role="status"></p>
+    <div class="d-acts">
+      <button type="button" id="agent-cancel">Close</button>
+      <button type="button" id="agent-stop" hidden>Stop</button>
+      <button type="submit" class="b-accept" id="agent-start">Read the script</button>
+    </div>
+  </form>
+</dialog>
 <script type="application/json" id="sample">__SAMPLE__</script>
 <script>__APP__</script>

@@ -1,5 +1,7 @@
 import { parse, CascadeDoc, Scene, Beat, Goal, Item } from './parser';
 import { blocks, inline } from './render';
+import { analyse, Proposal, AgentNote } from './agent';
+import { apply } from './edit';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -8,6 +10,14 @@ const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
 let doc: CascadeDoc;
 let longest = 1;
 let beatList: Beat[] = [];
+let text = '';
+let fileName = 'script.fountain';
+let dirty = false;
+let pending: Proposal[] = [];
+let agents: AgentNote[] = [];
+let notes: string[] = [];
+let run: AbortController | null = null;
+let saveHandle: any = null;
 
 const walk = <T extends Item>(nodes: Item[], type: T['type']): T[] =>
   nodes.flatMap(c => [...(c.type === type ? [c as T] : []), ...(c.type === 'section' ? walk<T>(c.children, type) : [])]);
@@ -60,13 +70,20 @@ function itemHtml(node: Item): string {
   }
 }
 
-function load(text: string, name: string, sample = false) {
+function load(newText: string, name: string, sample = false) {
+  text = newText; fileName = name; dirty = false; pending = []; agents = []; notes = []; saveHandle = null;
+  $('doc-sample').hidden = !sample;
+  render(true);
+}
+
+/** Redraw everything from the current text. */
+function render(toTop = false) {
+  const name = fileName;
   doc = parse(text);
   beatList = walk<Beat>(doc.children, 'beat');
   longest = Math.max(1, ...beatList.map(b => b.endLine - b.line + 1));
   const title = doc.titlePage['title'] || name.replace(/\.[^.]+$/, '');
   $('doc-title').textContent = title;
-  $('doc-sample').hidden = !sample;
   const st = doc.stats;
   $('stats').textContent = [st.sequences ? plural(st.sequences, 'sequence') : st.sections ? plural(st.sections, 'section') : '',
     st.goals ? plural(st.goals, 'goal') : '', plural(st.beats, 'beat'), plural(st.scenes, 'scene')].filter(Boolean).join(' · ');
@@ -108,8 +125,127 @@ function load(text: string, name: string, sample = false) {
       default: return `<p class="s-${b.kind}" ${a}>${inline(b.text).replace(/\n/g, '<br>')}</p>`;
     }
   }).join('');
-  $('script').scrollTop = 0;
+  if (toTop) $('script').scrollTop = 0;
+  $('save').hidden = !dirty;
+  renderProposals();
   spy();
+}
+
+// ---------- proposals from the beat agent ----------
+
+function proposalHtml(p: Proposal, i: number): string {
+  const blocked = p.kind === 'status' && !doc.goals.some(g => g.id === p.goal);
+  let body = '';
+  if (p.kind === 'beat') body = `<input class="p-edit" data-i="${i}" data-f="text" value="${esc(p.text)}" aria-label="Beat description">${p.ahead ? `<span class="o-ahead">${esc(p.ahead)} ahead</span>` : ''}`;
+  else if (p.kind === 'sequence') body = `<input class="p-edit p-title" data-i="${i}" data-f="title" value="${esc(p.title)}" aria-label="Sequence title">${p.synopsis ? `<span class="o-syn">${inline(p.synopsis)}</span>` : ''}`;
+  else if (p.kind === 'goal') body = `<span>${goalSentence({ subject: p.subject, want: p.want, object: p.object } as Goal)} ${statusChip(p.status)}</span>`;
+  else { const g = doc.goals.find(x => x.id === p.goal) ?? (pending.find(x => x.kind === 'goal' && x.id === p.goal) as any);
+    body = `<span>${g ? goalSentence(g) : esc(p.goal)} ${statusChip(p.status)}</span>`; }
+  return `<li class="p-item p-${p.kind}"><span class="p-kind">${p.kind === 'status' ? 'goal' : p.kind}</span>
+    <div class="p-body">${body}${p.reason ? `<span class="p-why">${esc(p.reason)}</span>` : ''}
+      ${blocked ? '<span class="p-why">Accept its goal first.</span>' : ''}
+      <span class="p-acts"><button type="button" class="b-accept" data-accept="${i}"${blocked ? ' disabled' : ''}>Accept</button>
+      <button type="button" data-reject="${i}">Reject</button><button type="button" class="b-link" data-line="${p.line}">Show in script</button></span></div></li>`;
+}
+
+function renderProposals() {
+  const has = pending.length > 0 || agents.length > 0 || notes.length > 0;
+  $('rail-tabs').hidden = !has;
+  $('tab-proposals').textContent = `Proposals (${pending.length})`;
+  if (!has) { setRail('outline'); $('proposals').innerHTML = ''; return; }
+  // group by sequence: existing sequence sections, or sequences the agent proposes
+  const marks: Array<{ line: number; title: string; proposed: boolean }> = [
+    ...walk<any>(doc.children, 'section').filter(s => !s.children.some((c: Item) => c.type === 'section')).map(s => ({ line: s.line, title: s.title, proposed: false })),
+    ...pending.filter(p => p.kind === 'sequence').map(p => ({ line: p.line, title: (p as any).title, proposed: true })),
+  ].sort((a, b) => a.line - b.line);
+  const groups = new Map<number, number[]>();
+  pending.forEach((p, i) => {
+    const g = marks.filter(m => m.line <= p.line).pop()?.line ?? 0;
+    groups.set(g, [...(groups.get(g) ?? []), i]);
+  });
+  const who = agents.length ? `<details class="p-ledger"><summary>Who the agent found (${agents.length})</summary><ul>${agents.map(a =>
+    `<li><b>${esc(a.name)}</b> ${esc(a.about)}</li>`).join('')}</ul></details>` : '';
+  const warn = notes.length ? `<details class="p-ledger p-notes"><summary>${plural(notes.length, 'note')} from this run</summary><ul>${notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul></details>` : '';
+  $('proposals').innerHTML = who + warn + (pending.length ? '' : '<p class="hint">Every proposal has been accepted or rejected.</p>') +
+    [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([line, idx]) => {
+      const m = marks.find(x => x.line === line);
+      return `<section class="p-group"><header><div><span class="o-level">${m ? (m.proposed ? 'proposed sequence' : 'sequence') : 'before any sequence'}</span>
+        <span class="o-title">${esc(m?.title ?? 'Opening')}</span></div>
+        <button type="button" class="b-accept" data-accept-all="${idx.join(',')}">Accept all ${idx.length}</button></header>
+        <ol>${idx.map(i => proposalHtml(pending[i], i)).join('')}</ol></section>`;
+    }).join('');
+}
+
+/** Write the chosen proposals into the script and keep the rest, with their line numbers moved along. */
+function accept(indices: number[]) {
+  const chosen = indices.map(i => pending[i]).filter(Boolean);
+  // a status change can only be written once its goal exists
+  const goalIds = new Set([...doc.goals.map(g => g.id), ...chosen.filter(p => p.kind === 'goal').map(p => (p as any).id)]);
+  const ok = chosen.filter(p => p.kind !== 'status' || goalIds.has(p.goal));
+  if (!ok.length) return;
+  const keepScroll = $('script').scrollTop;
+  const done = apply(text, ok);
+  text = done.text; dirty = true;
+  pending = pending.filter(p => !ok.includes(p)).map(p => ({ ...p, line: done.shift(p.line) }));
+  render();
+  $('script').scrollTop = keepScroll;
+}
+
+function reject(i: number) {
+  const p = pending[i];
+  if (!p) return;
+  pending = pending.filter(x => x !== p && !(p.kind === 'goal' && x.kind === 'status' && x.goal === p.id));
+  if (p.kind === 'goal') pending.forEach(x => { if (x.kind === 'goal' && x.for === p.id) x.for = undefined; });
+  renderProposals();
+}
+
+function setRail(which: 'outline' | 'proposals') {
+  $('outline-pane').hidden = which !== 'outline';
+  $('proposals').hidden = which !== 'proposals';
+  $('tab-outline2').setAttribute('aria-pressed', String(which === 'outline'));
+  $('tab-proposals').setAttribute('aria-pressed', String(which === 'proposals'));
+}
+
+const store = { get: (k: string) => { try { return localStorage.getItem(k) ?? ''; } catch { return ''; } },
+  set: (k: string, v: string) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch { /* storage unavailable */ } } };
+
+async function findBeats() {
+  const key = $<HTMLInputElement>('api-key').value.trim(), model = $<HTMLInputElement>('api-model').value.trim();
+  const status = $('agent-status');
+  if (!key) { status.textContent = 'Enter your Anthropic API key first.'; return; }
+  store.set('fp-model', model);
+  store.set('fp-key', $<HTMLInputElement>('api-remember').checked ? key : '');
+  run = new AbortController();
+  $('agent-start').hidden = true; $('agent-stop').hidden = false;
+  status.textContent = 'Sending the script…';
+  try {
+    const a = await analyse({ key, model, text, doc, signal: run.signal,
+      onProgress: (_n, rows) => { status.textContent = `Reading the script… ${rows} findings so far.`; } });
+    pending = a.proposals; agents = a.agents;
+    notes = [...a.dropped, ...(a.truncated ? ['The reply was cut off before it finished, so the end of the script may have no proposals.'] : [])];
+    $<HTMLDialogElement>('agent-dialog').close();
+    status.textContent = '';
+    renderProposals(); setRail('proposals'); setPane('outline');
+  } catch (e: any) {
+    status.textContent = e?.name === 'AbortError' ? 'Stopped.'
+      : e instanceof TypeError ? 'This page could not reach the Anthropic API. Open FountainPen from your own built copy (dist/fountainpen.html) and check your connection.'
+      : `The run failed: ${e?.message ?? e}`;
+  } finally { run = null; $('agent-start').hidden = false; $('agent-stop').hidden = true; }
+}
+
+async function save() {
+  const w = window as any;
+  try {
+    if (w.showSaveFilePicker) {
+      saveHandle = saveHandle ?? await w.showSaveFilePicker({ suggestedName: fileName, types: [{ description: 'Fountain script', accept: { 'text/plain': ['.fountain'] } }] });
+      const out = await saveHandle.createWritable(); await out.write(text); await out.close();
+    } else {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' })); a.download = fileName; a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+    dirty = false; $('save').hidden = true;
+  } catch (e: any) { if (e?.name !== 'AbortError') $('save').textContent = 'Save failed. Try again'; }
 }
 
 function goTo(line: number) {
@@ -160,11 +296,35 @@ function readFile(f: File | undefined) {
 function start() {
   document.addEventListener('click', e => {
     const el = (e.target as HTMLElement).closest<HTMLElement>('[data-line]');
-    if (el && (el.closest('#outline') || el.closest('#problems'))) { e.preventDefault(); goTo(Number(el.dataset.line)); }
+    if (el && (el.closest('#outline') || el.closest('#problems') || el.closest('#proposals'))) { e.preventDefault(); goTo(Number(el.dataset.line)); }
   });
   $('script').addEventListener('scroll', () => requestAnimationFrame(spy), { passive: true });
   $<HTMLInputElement>('file').addEventListener('change', e => readFile((e.target as HTMLInputElement).files?.[0]));
   $<HTMLInputElement>('markup').addEventListener('change', e => { document.body.dataset.markup = (e.target as HTMLInputElement).checked ? 'on' : 'off'; });
+  $('proposals').addEventListener('click', e => {
+    const t = e.target as HTMLElement;
+    if (t.dataset.accept) accept([Number(t.dataset.accept)]);
+    else if (t.dataset.acceptAll) accept(t.dataset.acceptAll.split(',').map(Number));
+    else if (t.dataset.reject) reject(Number(t.dataset.reject));
+  });
+  $('proposals').addEventListener('input', e => {
+    const t = e.target as HTMLInputElement, p = pending[Number(t.dataset.i)] as any;
+    if (p && t.dataset.f) p[t.dataset.f] = t.value;
+  });
+  $('tab-outline2').addEventListener('click', () => setRail('outline'));
+  $('tab-proposals').addEventListener('click', () => setRail('proposals'));
+  $('find').addEventListener('click', () => {
+    $('agent-size').textContent = `${doc.lineCount.toLocaleString()} lines`;
+    $('agent-status').textContent = '';
+    $<HTMLDialogElement>('agent-dialog').showModal();
+  });
+  $('agent-form').addEventListener('submit', e => { e.preventDefault(); findBeats(); });
+  $('agent-stop').addEventListener('click', () => run?.abort());
+  $('agent-cancel').addEventListener('click', () => { run?.abort(); $<HTMLDialogElement>('agent-dialog').close(); });
+  $('save').addEventListener('click', save);
+  $<HTMLInputElement>('api-key').value = store.get('fp-key');
+  $<HTMLInputElement>('api-remember').checked = !!store.get('fp-key');
+  if (store.get('fp-model')) $<HTMLInputElement>('api-model').value = store.get('fp-model');
   $('tab-outline').addEventListener('click', () => setPane('outline'));
   $('tab-script').addEventListener('click', () => setPane('script'));
   ['dragover', 'drop'].forEach(t => document.addEventListener(t, e => {
