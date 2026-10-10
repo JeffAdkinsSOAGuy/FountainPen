@@ -19,7 +19,7 @@ Then open `dist/fountainpen.html` in a browser. Use **Open script**, or drag a `
 
 ## The beat agent
 
-**Find beats** sends the whole script to Claude through Anthropic's API, using your own API key, and asks where the drama turns. It works from the definitions in the Cascade specification: agents, goals and their status, sequences, and beats.
+**Find beats** sends the script to Claude through Anthropic's API, using your own API key, and asks where the drama turns. It reads in parts of about 5,000 words, always breaking between scenes, and carries a ledger from part to part: the story so far, the agents, each goal and its status, the open sequence, and the beat in progress. After the last part it asks one hindsight question, so that a goal revealed late can be marked as secret from where it was first held. It works from the definitions in the Cascade specification: agents, goals and their status, sequences, and beats.
 
 - What comes back is a list of proposals, each with its reason, grouped by sequence.
 - Accept or reject each one, edit a beat's wording or a sequence's title first if you like, or accept a whole sequence at once.

@@ -222,7 +222,7 @@ async function findBeats() {
   status.textContent = 'Sending the script…';
   try {
     const a = await analyse({ key, model, text, doc, signal: run.signal,
-      onProgress: (_n, rows) => { status.textContent = `Reading the script… ${rows} findings so far.`; } });
+      onProgress: (part, parts, found) => { status.textContent = `Reading part ${part} of ${parts}… ${found} findings so far.`; } });
     pending = a.proposals; agents = a.agents;
     rawReply = a.raw;
     notes = [...a.dropped, ...(a.truncated ? ['The reply was cut off before it finished, so the end of the script may have no proposals.'] : []),
