@@ -1,0 +1,23 @@
+Title: Status rules
+
+[[goal: leave | id: leave | subject: ANN | object: TOM | status: secret]]
+
+[[status: active | goal: leave]]
+
+[[status: secret | goal: leave]]
+
+[[status: active | goal: leave]]
+
+[[status: abandoned | goal: leave]]
+
+[[status: won | goal: leave]]
+
+[[status: won | goal: nobody]]
+
+[[status: delighted | goal: leave]]
+
+[[goal: stay | subject: TOM]]
+
+[[goal: stay | id: stay | subject: TOM | for: later]]
+
+[[goal: later | id: later | subject: TOM]]

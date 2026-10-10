@@ -1,0 +1,9 @@
+Title: Custom
+Spine: custom
+    setup: The Marriage She Performs
+    rupture: Not Until You're Divorced
+    descent: Every Door in the House
+
+[[beat: A nice dinner | stage: setup]]
+
+[[beat: She says it | stage: rupture]]

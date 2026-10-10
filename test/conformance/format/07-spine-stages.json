@@ -1,0 +1,48 @@
+{
+  "structure": [
+    "sequence"
+  ],
+  "spines": [
+    "heros-journey"
+  ],
+  "outline": [
+    {
+      "section": "The Old Life",
+      "level": "sequence",
+      "id": "q1",
+      "stages": [
+        "ordinary-world"
+      ],
+      "contains": [
+        {
+          "beat": "She runs the shop alone",
+          "stage": "ordinary-world",
+          "scenes": 0
+        }
+      ]
+    },
+    {
+      "section": "The Letter",
+      "level": "sequence",
+      "stages": [
+        "call-to-adventure"
+      ],
+      "contains": [
+        {
+          "beat": "The bank gives her thirty days",
+          "stage": "heros-journey/refusal-of-the-call",
+          "scenes": 0
+        },
+        {
+          "beat": "Something unrelated",
+          "scenes": 0
+        }
+      ]
+    }
+  ],
+  "goals": [],
+  "problems": [
+    19,
+    21
+  ]
+}

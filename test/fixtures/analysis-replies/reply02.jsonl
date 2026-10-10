@@ -1,0 +1,5 @@
+{"kind":"agent","name":"WIFE","about":"A woman determined to tell her husband she wants a divorce, whatever he does to avoid hearing it."}
+{"kind":"agent","name":"HUSBAND","about":"A man who refuses to hear his wife ask for a divorce, to protect his reputation."}
+{"kind":"beat","line":14,"text":"He drowns her out by singing","ahead":"HUSBAND","reason":"The sequence opens with him holding the power: as long as he sings she cannot make him hear it."}
+{"kind":"beat","line":33,"text":"He reads the word and falls silent","ahead":"WIFE","reason":"Her new tactic succeeds, so the power shifts to her: he can no longer avoid knowing what she wants."}
+{"kind":"carry","summary":"The WIFE lets herself into the bedroom to tell the HUSBAND she wants a divorce. He shuts his eyes, sings louder and louder and plugs his ears so she cannot say it. She stops shouting, writes one word in lipstick on his shaving mirror and turns it to him. He reads it and the singing dies. She still wants to divorce him and he still wants to protect his reputation; both goals are active and unresolved. He can no longer pretend he has not been told."}

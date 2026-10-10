@@ -1,0 +1,35 @@
+{
+  "structure": [
+    "sequence"
+  ],
+  "spines": [],
+  "outline": [
+    {
+      "section": "One",
+      "level": "sequence",
+      "id": "q1",
+      "contains": [
+        {
+          "scene": "INT. KITCHEN - DAY",
+          "id": "s1"
+        },
+        {
+          "beat": "Properly placed",
+          "id": "b1",
+          "scenes": 1
+        },
+        {
+          "beat": "No blank line below",
+          "id": "b2",
+          "scenes": 1
+        }
+      ]
+    }
+  ],
+  "goals": [],
+  "problems": [
+    16,
+    20,
+    22
+  ]
+}

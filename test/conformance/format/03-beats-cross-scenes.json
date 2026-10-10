@@ -1,0 +1,49 @@
+{
+  "structure": [
+    "sequence"
+  ],
+  "spines": [],
+  "outline": [
+    {
+      "section": "The Divorce",
+      "level": "sequence",
+      "contains": [
+        {
+          "scene": "EXT. DRIVEWAY - DAY"
+        },
+        {
+          "beat": "He shuts her out so she can't say it",
+          "id": "b1",
+          "ahead": "HUSBAND",
+          "scenes": 3
+        },
+        {
+          "scene": "INT. HOUSE - CONTINUOUS"
+        },
+        {
+          "scene": "EXT. DRIVEWAY - CONTINUOUS"
+        },
+        {
+          "beat": "She gets through",
+          "id": "b2",
+          "ahead": "WIFE",
+          "scenes": 2
+        },
+        {
+          "scene": "INT. BEDROOM - CONTINUOUS"
+        }
+      ]
+    },
+    {
+      "section": "The Morning After",
+      "level": "sequence",
+      "contains": [
+        {
+          "scene": "INT. KITCHEN - DAY"
+        }
+      ]
+    }
+  ],
+  "goals": [],
+  "problems": []
+}

@@ -1,0 +1,21 @@
+{
+  "structure": [],
+  "spines": [],
+  "outline": [
+    {
+      "scene": "INT. ROOM - DAY"
+    },
+    {
+      "beat": "The offer: 45,000 or the video",
+      "id": "b1",
+      "scenes": 1
+    },
+    {
+      "beat": "Either this | or that",
+      "ahead": "ANN",
+      "scenes": 1
+    }
+  ],
+  "goals": [],
+  "problems": []
+}

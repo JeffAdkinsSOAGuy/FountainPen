@@ -194,6 +194,8 @@ export function parse(text: string): CascadeDoc {
         else if (!f['goal']) problem(ln, 'A status note needs a goal field naming the goal it changes.');
         else if (!g) problem(ln, `No goal with the ID "${f['goal']}" has been declared before this line.`);
         else if (CLOSED.has(g.status)) problem(ln, `Goal "${g.id}" was already ${g.status} on line ${g.history[g.history.length - 1].line}.`);
+        else if (note.value === g.status) problem(ln, `Goal "${g.id}" is already ${g.status}.`);
+        else if (note.value === 'secret') problem(ln, `Goal "${g.id}" is already in the open, so it cannot become secret again.`);
         else {
           g.status = note.value as GoalStatus; g.history.push({ status: g.status, line: ln });
           here().push({ type: 'status', goal: g.id, status: g.status, line: ln });

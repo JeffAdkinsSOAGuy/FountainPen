@@ -1,0 +1,22 @@
+Title: Goals
+Structure: sequence
+
+# The Mission
+
+[[goal: stop | id: mission | subject: BOND | object: LARGO]]
+
+[[goal: find the bombs | id: bombs | subject: BOND | for: mission]]
+
+[[goal: use | id: use-her | subject: BOND | object: DOMINO | for: bombs | status: secret]]
+
+[[beat: He lets her see him watching]]
+
+[[status: active | goal: use-her]]
+
+[[goal: protect | id: protect-her | subject: BOND | object: DOMINO | from: use-her]]
+
+[[goal: hide | id: hide | subject: LARGO, VARGAS | object: the bombs]]
+
+[[status: won | goal: bombs]]
+
+[[status: lost | goal: hide]]

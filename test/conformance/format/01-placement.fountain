@@ -1,0 +1,22 @@
+Title: Placement
+Structure: sequence
+
+# One
+
+[[id: q1]]
+
+INT. KITCHEN - DAY
+
+[[id: s1]]
+
+[[beat: Properly placed | id: b1]]
+
+She waits.
+
+[[beat: No blank line below | id: b2]]
+He enters.
+
+ANN
+Hello. [[beat: Inside a speech]]
+
+[[id: orphan]]

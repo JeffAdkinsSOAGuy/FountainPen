@@ -1,0 +1,10 @@
+{"kind":"agent","name":"WIFE","about":"A married woman who wants her girlfriend and will end her marriage to have her."}
+{"kind":"agent","name":"GIRLFRIEND","about":"The wife's lover, who refuses to go on until the wife is divorced."}
+{"kind":"agent","name":"HUSBAND","about":"The wife's husband, who does not know about the affair or what is coming."}
+{"kind":"goal","line":10,"id":"girlfriend","want":"be with","subject":["WIFE"],"object":"GIRLFRIEND","status":"active","reason":"She already holds it when the story opens: she reaches for the Girlfriend, who knows exactly what she wants."}
+{"kind":"beat","line":10,"text":"Girlfriend holds her off","ahead":"GIRLFRIEND","reason":"The sequence opens with the Girlfriend in control, withholding herself and setting the terms."}
+{"kind":"goal","line":15,"id":"divorce","want":"divorce","subject":["WIFE"],"object":"HUSBAND","for":"girlfriend","status":"secret","reason":"She takes it on to meet the Girlfriend's condition, and the Husband does not know."}
+{"kind":"beat","line":24,"text":"She readies him, he suspects nothing","ahead":"WIFE","reason":"The sequence opens with the Wife holding the power: she knows what she is about to do and he does not."}
+{"kind":"beat","line":32,"text":"She says it","ahead":"WIFE","reason":"Her objective turns from preparing him to telling him, and he can no longer be unaware."}
+{"kind":"status","line":32,"goal":"divorce","status":"active","reason":"She says it to his face, so the object of the goal now knows."}
+{"kind":"carry","summary":"The WIFE is having an affair with the GIRLFRIEND, who refuses her until she is divorced. The Wife promises to tell her husband that night. At dinner she pours the HUSBAND wine, is in a good mood, then tells him she wants a divorce; his carving knife stops. The Wife wants to be with the Girlfriend (active) and, in service of that, to divorce the Husband (active since she said it). The Husband now knows about the divorce but, as far as shown, not about the Girlfriend. His response is unknown and nothing is resolved."}

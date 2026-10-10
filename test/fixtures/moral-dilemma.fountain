@@ -858,8 +858,6 @@ ARCHIBALD is standing beside SUZIE.
 
 [[status: won | goal: corrupt]]
 
-[[status: won | goal: sell-nana]]
-
 !Archibald turns directly into the camera.
 
             >SHIFTS TO SHOW STUDIO WHERE NANA IS A CONTESTANT:
@@ -889,6 +887,8 @@ NANA is at the contestant podium. SUZIE and ARCHIBALD (video) are on the screen 
     Oh, Suzie! How could you give me up?
 
 !On the monitor, three PAB soldiers move into Suzie's house. They exit a moment later with her heartbroken and beaten, she doesn't resist. The OFFICER draws out her gun, turns towards the camera, and gives a signal to cut the feed. The video turns into an exceedingly happy face of Archibald.
+
+[[status: lost | goal: sell-nana]]
 
 [[status: lost | goal: money]]
 

@@ -1,0 +1,32 @@
+Title: Levels
+Structure: act, sequence
+
+# Act One
+
+[[id: a1]]
+
+## The Arrival
+
+[[id: q1]]
+
+= She comes home.
+
+INT. HALL - DAY
+
+She drops her bag.
+
+### A deeper heading with no Cascade meaning
+
+## The Buyer
+
+INT. OFFICE - DAY
+
+He signs.
+
+# Act Two
+
+## The Reckoning
+
+EXT. STREET - NIGHT
+
+Rain.

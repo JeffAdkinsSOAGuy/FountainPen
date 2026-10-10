@@ -1,0 +1,60 @@
+{
+  "structure": [
+    "sequence"
+  ],
+  "spines": [],
+  "outline": [
+    {
+      "section": "The Game",
+      "level": "sequence",
+      "id": "game",
+      "contains": [
+        {
+          "beat": "She bets everything",
+          "scenes": 0
+        }
+      ]
+    },
+    {
+      "section": "The Scheme",
+      "level": "sequence",
+      "id": "scheme",
+      "contains": [
+        {
+          "beat": "He plans to sell her",
+          "scenes": 0
+        }
+      ]
+    },
+    {
+      "section": "The Game",
+      "level": "sequence",
+      "resumes": "game",
+      "contains": [
+        {
+          "beat": "She learns what he planned",
+          "scenes": 0
+        }
+      ]
+    },
+    {
+      "section": "The Game",
+      "level": "sequence",
+      "resumes": "game"
+    },
+    {
+      "section": "Nowhere",
+      "level": "sequence"
+    },
+    {
+      "section": "Both",
+      "level": "sequence",
+      "id": "both"
+    }
+  ],
+  "goals": [],
+  "problems": [
+    28,
+    34
+  ]
+}

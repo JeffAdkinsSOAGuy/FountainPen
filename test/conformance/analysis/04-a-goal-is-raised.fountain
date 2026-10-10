@@ -1,0 +1,24 @@
+Title: A goal is raised out of another
+Structure: sequence
+
+# The Inspection
+
+[[id: q1]]
+
+[[goal: save | id: shop | subject: ANNA | object: the shop]]
+
+[[goal: use the name of | id: use-tom | subject: ANNA | object: TOM | for: shop | status: secret]]
+
+INT. SHOP - WORKROOM - DAY
+
+An INSPECTOR turns a cracked valve over in his hand. ANNA and TOM stand side by side. Tom has gone grey.
+
+INSPECTOR
+Whoever fitted this could have killed someone. I need a name for the report. It decides your licence.
+
+Tom opens his mouth.
+
+ANNA
+I fitted it.
+
+Tom stares at her. The Inspector writes it down.

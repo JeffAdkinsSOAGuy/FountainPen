@@ -4,7 +4,7 @@ A script editor built on [Fountain Cascade](https://github.com/JeffAdkinsSOAGuy/
 
 **Status:** early. It opens a script and shows its drama beside the text: sequences (including ones that pause and resume), the goals in play in each, and the beats, with scene headings as quiet markers between them. A Goals tab shows the goal tree, and a script that names a spine, such as the Hero's Journey, gets a checklist of its stages. A plot written with no script text opens the same way. Its beat agent reads a whole script and proposes goals, sequences, and beats for you to accept, edit, or reject. You cannot yet edit the script text itself.
 
-**Supports:** Fountain Cascade v0.3.
+**Supports:** Fountain Cascade v0.3.1.
 
 ## Run it
 
@@ -46,7 +46,7 @@ npm test
 | `src/view.ts` | The outline, the proposals panel, and saving. |
 | `src/page.html` | The page and its styles. |
 | `build.mjs` | Bundles everything into the single file `dist/fountainpen.html`. |
-| `test/` | Tests for the parser, the agent's checks, and the editing, run against a complete script and a recorded model reply. |
+| `test/` | Tests for the parser, the agent's checks, and the editing, run against a complete script and recorded model replies. `test/conformance` is a copy of the conformance cases from the Fountain Cascade repository. |
 
 ## Not built yet
 

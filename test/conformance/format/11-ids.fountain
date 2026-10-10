@@ -1,0 +1,24 @@
+Title: IDs
+Structure: sequence
+
+# One
+
+[[id: q1]]
+
+INT. A - DAY
+
+[[id: s1]]
+
+[[beat: First | id: b1]]
+
+[[beat: Same id again | id: b1]]
+
+[[beat: Not a valid id | id: Has Spaces]]
+
+[[goal: go | id: s1 | subject: ANN]]
+
+INT. B - DAY #12#
+
+[[id: s2]]
+
+[[id: s3]]

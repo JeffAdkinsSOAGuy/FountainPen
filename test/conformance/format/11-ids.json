@@ -1,0 +1,44 @@
+{
+  "structure": [
+    "sequence"
+  ],
+  "spines": [],
+  "outline": [
+    {
+      "section": "One",
+      "level": "sequence",
+      "id": "q1",
+      "contains": [
+        {
+          "scene": "INT. A - DAY",
+          "id": "s1"
+        },
+        {
+          "beat": "First",
+          "id": "b1",
+          "scenes": 1
+        },
+        {
+          "beat": "Same id again",
+          "scenes": 1
+        },
+        {
+          "beat": "Not a valid id",
+          "scenes": 2
+        },
+        {
+          "scene": "INT. B - DAY",
+          "id": "s2",
+          "number": "12"
+        }
+      ]
+    }
+  ],
+  "goals": [],
+  "problems": [
+    14,
+    16,
+    18,
+    24
+  ]
+}

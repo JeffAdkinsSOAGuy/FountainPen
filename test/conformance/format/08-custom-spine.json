@@ -1,0 +1,26 @@
+{
+  "structure": [],
+  "spines": [
+    {
+      "custom": [
+        "setup",
+        "rupture",
+        "descent"
+      ]
+    }
+  ],
+  "outline": [
+    {
+      "beat": "A nice dinner",
+      "stage": "setup",
+      "scenes": 0
+    },
+    {
+      "beat": "She says it",
+      "stage": "rupture",
+      "scenes": 0
+    }
+  ],
+  "goals": [],
+  "problems": []
+}

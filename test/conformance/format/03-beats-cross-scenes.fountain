@@ -1,0 +1,32 @@
+Title: Beats
+Structure: sequence
+
+# The Divorce
+
+EXT. DRIVEWAY - DAY
+
+The house, before anyone arrives.
+
+[[beat: He shuts her out so she can't say it | id: b1 | ahead: HUSBAND]]
+
+He runs into the house and locks the door.
+
+INT. HOUSE - CONTINUOUS
+
+He runs to the bedroom. Locks the door.
+
+EXT. DRIVEWAY - CONTINUOUS
+
+[[beat: She gets through | id: b2 | ahead: WIFE]]
+
+She puts in her key.
+
+INT. BEDROOM - CONTINUOUS
+
+She opens the door.
+
+# The Morning After
+
+INT. KITCHEN - DAY
+
+An empty room. A clock.

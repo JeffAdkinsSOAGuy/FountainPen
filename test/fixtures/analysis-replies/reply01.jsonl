@@ -1,0 +1,5 @@
+{"kind":"agent","name":"WIFE","about":"A woman who has come home determined to tell her husband she wants a divorce."}
+{"kind":"agent","name":"HUSBAND","about":"A man who knows what his wife is about to say and will do anything not to hear it, to protect his reputation."}
+{"kind":"beat","line":14,"text":"She arrives and he knows","ahead":"WIFE","reason":"The sequence opens with the power hers: she has come to say it and he can see it coming."}
+{"kind":"beat","line":19,"text":"He runs before she can say it","ahead":"HUSBAND","reason":"His objective changes from waiting to escaping, and by locking himself away he denies her the conversation."}
+{"kind":"carry","summary":"The WIFE comes home to tell the HUSBAND she wants a divorce. He reads it in her face, and when she says they need to talk he drops the hose, runs into the house, locks the front door and then the bedroom door, and sits on the bed listening. She still wants to divorce him and he still wants to protect his reputation; both goals are active and unresolved. He knows what she intends but has not let her say it. She is outside, locked out for now."}

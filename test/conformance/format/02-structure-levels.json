@@ -1,0 +1,56 @@
+{
+  "structure": [
+    "act",
+    "sequence"
+  ],
+  "spines": [],
+  "outline": [
+    {
+      "section": "Act One",
+      "level": "act",
+      "id": "a1",
+      "contains": [
+        {
+          "section": "The Arrival",
+          "level": "sequence",
+          "id": "q1",
+          "synopsis": "She comes home.",
+          "contains": [
+            {
+              "scene": "INT. HALL - DAY"
+            },
+            {
+              "section": "A deeper heading with no Cascade meaning"
+            }
+          ]
+        },
+        {
+          "section": "The Buyer",
+          "level": "sequence",
+          "contains": [
+            {
+              "scene": "INT. OFFICE - DAY"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "section": "Act Two",
+      "level": "act",
+      "contains": [
+        {
+          "section": "The Reckoning",
+          "level": "sequence",
+          "contains": [
+            {
+              "scene": "EXT. STREET - NIGHT"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "goals": [],
+  "problems": []
+}

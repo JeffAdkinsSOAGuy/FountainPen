@@ -1,0 +1,21 @@
+Title: Stages
+Structure: sequence
+Spine: heros-journey
+
+# The Old Life
+
+[[id: q1]]
+
+[[stage: ordinary-world]]
+
+[[beat: She runs the shop alone | stage: ordinary-world]]
+
+# The Letter
+
+[[stage: call-to-adventure]]
+
+[[beat: The bank gives her thirty days | stage: heros-journey/refusal-of-the-call]]
+
+[[stage: ordeal]]
+
+[[beat: Something unrelated | stage: third-act-twist]]

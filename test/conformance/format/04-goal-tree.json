@@ -1,0 +1,109 @@
+{
+  "structure": [
+    "sequence"
+  ],
+  "spines": [],
+  "outline": [
+    {
+      "section": "The Mission",
+      "level": "sequence",
+      "contains": [
+        {
+          "goal": "mission"
+        },
+        {
+          "goal": "bombs"
+        },
+        {
+          "goal": "use-her"
+        },
+        {
+          "beat": "He lets her see him watching",
+          "scenes": 0
+        },
+        {
+          "status": "active",
+          "goal": "use-her"
+        },
+        {
+          "goal": "protect-her"
+        },
+        {
+          "goal": "hide"
+        },
+        {
+          "status": "won",
+          "goal": "bombs"
+        },
+        {
+          "status": "lost",
+          "goal": "hide"
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "mission",
+      "subject": [
+        "BOND"
+      ],
+      "want": "stop",
+      "object": "LARGO",
+      "statuses": [
+        "active"
+      ]
+    },
+    {
+      "id": "bombs",
+      "subject": [
+        "BOND"
+      ],
+      "want": "find the bombs",
+      "for": "mission",
+      "statuses": [
+        "active",
+        "won"
+      ]
+    },
+    {
+      "id": "use-her",
+      "subject": [
+        "BOND"
+      ],
+      "want": "use",
+      "object": "DOMINO",
+      "for": "bombs",
+      "statuses": [
+        "secret",
+        "active"
+      ]
+    },
+    {
+      "id": "protect-her",
+      "subject": [
+        "BOND"
+      ],
+      "want": "protect",
+      "object": "DOMINO",
+      "from": "use-her",
+      "statuses": [
+        "active"
+      ]
+    },
+    {
+      "id": "hide",
+      "subject": [
+        "LARGO",
+        "VARGAS"
+      ],
+      "want": "hide",
+      "object": "the bombs",
+      "statuses": [
+        "active",
+        "lost"
+      ]
+    }
+  ],
+  "problems": []
+}

@@ -1,0 +1,70 @@
+{
+  "structure": [
+    "sequence"
+  ],
+  "spines": [
+    "heros-journey"
+  ],
+  "outline": [
+    {
+      "section": "The Briefing",
+      "level": "sequence",
+      "stages": [
+        "meeting-the-mentor"
+      ],
+      "contains": [
+        {
+          "goal": "mission"
+        },
+        {
+          "beat": "M hands him the file",
+          "ahead": "M",
+          "scenes": 0
+        },
+        {
+          "beat": "Q warns him, and he does not listen",
+          "ahead": "BOND",
+          "scenes": 0
+        }
+      ]
+    },
+    {
+      "section": "Nassau",
+      "level": "sequence",
+      "contains": [
+        {
+          "goal": "bombs"
+        },
+        {
+          "beat": "He lets Domino see him watching",
+          "scenes": 0
+        }
+      ]
+    }
+  ],
+  "goals": [
+    {
+      "id": "mission",
+      "subject": [
+        "BOND"
+      ],
+      "want": "stop",
+      "object": "LARGO",
+      "statuses": [
+        "active"
+      ]
+    },
+    {
+      "id": "bombs",
+      "subject": [
+        "BOND"
+      ],
+      "want": "find the bombs",
+      "for": "mission",
+      "statuses": [
+        "active"
+      ]
+    }
+  ],
+  "problems": []
+}

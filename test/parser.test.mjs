@@ -41,6 +41,7 @@ test('goals: subject, object, for, and status history', () => {
   assert.deepEqual(goal('scheme').history.map(h => h.status), ['secret', 'active', 'lost']);
   assert.deepEqual(goal('payout').history.map(h => h.status), ['secret', 'active', 'lost']);
   assert.equal(goal('cure').status, 'abandoned');
+  assert.deepEqual(goal('sell-nana').history.map(h => h.status), ['active', 'lost']);        // she agrees, but never collects
   assert.equal(goal('corrupt').status, 'won');
   assert.equal(goal('warn').status, 'active');                     // never resolved
   const p = parse('[[goal: sex | id: sex | subject: WIFE, GIRLFRIEND]]\n');

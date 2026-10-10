@@ -5,6 +5,7 @@ mkdirSync('dist', { recursive: true });
 await build({ entryPoints: ['src/parser.ts'], bundle: true, format: 'esm', outfile: 'dist/parser.mjs' });
 await build({ entryPoints: ['src/agent.ts'], bundle: true, format: 'esm', outfile: 'dist/agent.mjs' });
 await build({ entryPoints: ['src/edit.ts'], bundle: true, format: 'esm', outfile: 'dist/edit.mjs' });
+await build({ entryPoints: ['src/summary.ts'], bundle: true, format: 'esm', outfile: 'dist/summary.mjs' });
 const app = await build({ entryPoints: ['src/view.ts'], bundle: true, format: 'iife', minify: true, write: false, target: 'es2020' });
 const safe = s => s.replace(/</g, '\\u003c');
 const sample = safe(JSON.stringify(readFileSync('test/fixtures/moral-dilemma.fountain', 'utf8')));

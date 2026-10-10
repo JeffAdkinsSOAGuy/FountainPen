@@ -1,0 +1,19 @@
+Title: Untitled Plot
+Structure: sequence
+Spine: heros-journey
+
+# The Briefing
+
+[[stage: meeting-the-mentor]]
+
+[[goal: stop | id: mission | subject: BOND | object: LARGO]]
+
+[[beat: M hands him the file | ahead: M]]
+
+[[beat: Q warns him, and he does not listen | ahead: BOND]]
+
+# Nassau
+
+[[goal: find the bombs | id: bombs | subject: BOND | for: mission]]
+
+[[beat: He lets Domino see him watching]]

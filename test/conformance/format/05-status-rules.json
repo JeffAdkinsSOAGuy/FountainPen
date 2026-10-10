@@ -1,0 +1,68 @@
+{
+  "structure": [],
+  "spines": [],
+  "outline": [
+    {
+      "goal": "leave"
+    },
+    {
+      "status": "active",
+      "goal": "leave"
+    },
+    {
+      "status": "abandoned",
+      "goal": "leave"
+    },
+    {
+      "goal": "stay"
+    },
+    {
+      "goal": "later"
+    }
+  ],
+  "goals": [
+    {
+      "id": "leave",
+      "subject": [
+        "ANN"
+      ],
+      "want": "leave",
+      "object": "TOM",
+      "statuses": [
+        "secret",
+        "active",
+        "abandoned"
+      ]
+    },
+    {
+      "id": "stay",
+      "subject": [
+        "TOM"
+      ],
+      "want": "stay",
+      "for": "later",
+      "statuses": [
+        "active"
+      ]
+    },
+    {
+      "id": "later",
+      "subject": [
+        "TOM"
+      ],
+      "want": "later",
+      "statuses": [
+        "active"
+      ]
+    }
+  ],
+  "problems": [
+    7,
+    9,
+    13,
+    15,
+    17,
+    19,
+    21
+  ]
+}
