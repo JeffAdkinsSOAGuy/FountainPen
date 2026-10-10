@@ -114,17 +114,24 @@ test('a part-by-part run carries the ledger forward and applies hindsight', asyn
   try { a = await analyse({ key: 'k', model: 'm', text: plain, doc: parse(plain), targetWords: 1300, onProgress: (p, n) => seen.push(`${p}/${n}`) }); }
   finally { globalThis.fetch = real; }
   assert.equal(sent.length, 4);
-  assert.match(sent[1], /part 2 of 3[\s\S]*Goals:\n- warn-viewer:[\s\S]*Open sequence: Suzie Plays For Cash[\s\S]*Beat in progress: Archibald tempts her/);
+  assert.match(sent[1], /part 2 of 3[\s\S]*- cash-durand: SUZIE wants to cash in DURAND \(secret, serves win-big\)[\s\S]*Sequences so far:\n- warning:[\s\S]*Open sequence: suzie-game: Suzie Plays for Cash[\s\S]*Beat in progress: Archibald holds back/);
   assert.match(sent[2], /the last part/);
   assert.match(sent[3], /hindsight question/);
   assert.ok(seen.includes('1/3') && seen.includes('3/3'));
-  const nana = a.proposals.find(p => p.kind === 'goal' && p.id === 'nana-payout');
-  assert.deepEqual([nana.status, nana.line < 744], ['secret', true]);                     // moved back from the reveal
   assert.deepEqual(a.dropped, []);
-  const doc = parse(apply(plain, a.proposals).text);
+  const count = k => a.proposals.filter(p => p.kind === k).length;
+  assert.deepEqual([count('sequence'), count('resume'), count('goal'), count('beat')], [5, 3, 12, 23]);
+  assert.deepEqual(a.proposals.filter(p => p.kind === 'resume').map(p => p.sequence), ['suzie-game', 'suzie-game', 'warning']);
+  const nana = a.proposals.find(p => p.kind === 'goal' && p.id === 'nana-payout');
+  assert.deepEqual([nana.status, nana.line < 744], ['secret', true]);                     // hindsight moved it back from the reveal
+  const sold = a.proposals.find(p => p.kind === 'goal' && p.id === 'cash-nana');
+  assert.deepEqual([sold.for, sold.from], ['win-big', 'spare-nana']);                     // serves one goal, grew out of another
+  const done = apply(plain, a.proposals), doc = parse(done.text);
   assert.deepEqual(doc.diagnostics, []);
-  assert.deepEqual([doc.stats.sequences, doc.stats.goals, doc.stats.beats], [8, 14, 23]);
-  assert.equal(strip(apply(plain, a.proposals).text), strip(plain));
+  assert.deepEqual([doc.stats.sequences, doc.stats.sections, doc.stats.goals, doc.stats.beats], [5, 8, 12, 23]);
+  assert.deepEqual(doc.children.filter(c => c.type === 'section').map(s => s.resumes ?? s.id),
+    ['warning', 'suzie-game', 'durand-scheme', 'suzie-game', 'sponsor', 'suzie-game', 'nana-game', 'warning']);
+  assert.equal(strip(done.text), strip(plain));
 });
 test('a failure part-way keeps what was found', async () => {
   const real = globalThis.fetch; let n = 0;
@@ -135,4 +142,26 @@ test('a failure part-way keeps what was found', async () => {
   try { a = await analyse({ key: 'k', model: 'm', text: plain, doc: parse(plain), targetWords: 1300 }); } finally { globalThis.fetch = real; }
   assert.ok(a.proposals.length > 5);
   assert.match(a.dropped.join(' '), /stopped at part 2 of 3: rate limited/);
+});
+test('proposals write resumes, goal links and stages as v0.3 notes', () => {
+  const t = 'Title: T\nSpine: heros-journey\n\nINT. A - DAY\n\nOne.\n\nINT. B - DAY\n\nTwo.\n\nINT. A - DAY\n\nThree.\n';
+  const props = [
+    { kind: 'sequence', line: 4, id: 'home', title: 'Home', synopsis: '', stage: 'ordinary-world', reason: '' },
+    { kind: 'goal', line: 6, id: 'top', want: 'keep', subject: ['ANN'], object: 'the house', status: 'active', reason: '' },
+    { kind: 'goal', line: 6, id: 'use', want: 'use', subject: ['ANN'], object: 'TOM', for: 'top', status: 'secret', reason: '' },
+    { kind: 'sequence', line: 8, id: 'away', title: 'Away', synopsis: '', reason: '' },
+    { kind: 'resume', line: 12, sequence: 'home', title: 'Home', reason: '' },
+    { kind: 'goal', line: 14, id: 'love', want: 'love', subject: ['ANN'], object: 'TOM', from: 'use', status: 'active', reason: '' },
+    { kind: 'beat', line: 14, text: 'She cannot do it', stage: 'ordeal', reason: '' },
+  ];
+  const doc = parse(apply(t, props).text);
+  assert.deepEqual(doc.diagnostics, []);
+  const secs = doc.children.filter(c => c.type === 'section');
+  assert.deepEqual(secs.map(s => [s.id, s.resumes, s.stages]), [['home', undefined, ['ordinary-world']], ['away', undefined, []], [undefined, 'home', []]]);
+  assert.deepEqual(doc.goals.map(g => [g.id, g.for, g.from]), [['top', undefined, undefined], ['use', 'top', undefined], ['love', undefined, 'use']]);
+  assert.equal(secs[2].children.find(c => c.type === 'beat').stage, 'ordeal');
+  // a resume whose sequence was never accepted stands as a sequence of its own
+  const alone = parse(apply(t, [props[4]]).text);
+  assert.deepEqual(alone.diagnostics, []);
+  assert.deepEqual([alone.stats.sequences, alone.children.find(c => c.type === 'section').resumes], [1, undefined]);
 });

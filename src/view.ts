@@ -182,12 +182,16 @@ function render(toTop = false) {
 function proposalHtml(p: Proposal, i: number): string {
   const blocked = p.kind === 'status' && !doc.goals.some(g => g.id === p.goal);
   let body = '';
-  if (p.kind === 'beat') body = `<input class="p-edit" data-i="${i}" data-f="text" value="${esc(p.text)}" aria-label="Beat description">${p.ahead ? `<span class="o-ahead">${esc(p.ahead)} ahead</span>` : ''}`;
-  else if (p.kind === 'sequence') body = `<input class="p-edit p-title" data-i="${i}" data-f="title" value="${esc(p.title)}" aria-label="Sequence title">${p.synopsis ? `<span class="o-syn">${inline(p.synopsis)}</span>` : ''}`;
-  else if (p.kind === 'goal') body = `<span>${goalSentence({ subject: p.subject, want: p.want, object: p.object } as Goal)} ${statusChip(p.status)}</span>`;
+  const stage = (p.kind === 'beat' || p.kind === 'sequence') && p.stage ? `<span>${stageChip(p.stage)}</span>` : '';
+  const named = (id?: string) => { if (!id) return ''; const g = doc.goals.find(x => x.id === id) ?? (pending.find(x => x.kind === 'goal' && x.id === id) as any); return g ? goalSentence(g).replace(/<[^>]+>/g, '') : id; };
+  if (p.kind === 'beat') body = `<input class="p-edit" data-i="${i}" data-f="text" value="${esc(p.text)}" aria-label="Beat description">${p.ahead ? `<span class="o-ahead">${esc(p.ahead)} ahead</span>` : ''}${stage}`;
+  else if (p.kind === 'sequence') body = `<input class="p-edit p-title" data-i="${i}" data-f="title" value="${esc(p.title)}" aria-label="Sequence title">${p.synopsis ? `<span class="o-syn">${inline(p.synopsis)}</span>` : ''}${stage}`;
+  else if (p.kind === 'resume') body = `<span><b>${esc(p.title)}</b> resumes here</span>`;
+  else if (p.kind === 'goal') body = `<span>${goalSentence({ subject: p.subject, want: p.want, object: p.object } as Goal)} ${statusChip(p.status)}</span>${
+    p.for ? `<span class="o-for">so that ${esc(named(p.for))}</span>` : ''}${p.from ? `<span class="o-for">grew out of “${esc(named(p.from))}”</span>` : ''}`;
   else { const g = doc.goals.find(x => x.id === p.goal) ?? (pending.find(x => x.kind === 'goal' && x.id === p.goal) as any);
     body = `<span>${g ? goalSentence(g) : esc(p.goal)} ${statusChip(p.status)}</span>`; }
-  return `<li class="p-item p-${p.kind}"><span class="p-kind">${p.kind === 'status' ? 'goal' : p.kind}</span>
+  return `<li class="p-item p-${p.kind}"><span class="p-kind">${p.kind === 'status' ? 'goal' : p.kind === 'resume' ? 'sequence' : p.kind}</span>
     <div class="p-body">${body}${p.reason ? `<span class="p-why">${esc(p.reason)}</span>` : ''}
       ${blocked ? '<span class="p-why">Accept its goal first.</span>' : ''}
       <span class="p-acts"><button type="button" class="b-accept" data-accept="${i}"${blocked ? ' disabled' : ''}>Accept</button>
@@ -202,7 +206,7 @@ function renderProposals() {
   // group by sequence: existing sequence sections, or sequences the agent proposes
   const marks: Array<{ line: number; title: string; proposed: boolean }> = [
     ...walk<any>(doc.children, 'section').filter(s => !s.children.some((c: Item) => c.type === 'section')).map(s => ({ line: s.line, title: s.title, proposed: false })),
-    ...pending.filter(p => p.kind === 'sequence').map(p => ({ line: p.line, title: (p as any).title, proposed: true })),
+    ...pending.filter(p => p.kind === 'sequence' || p.kind === 'resume').map(p => ({ line: p.line, title: (p as any).title + (p.kind === 'resume' ? ', resumed' : ''), proposed: true })),
   ].sort((a, b) => a.line - b.line);
   const groups = new Map<number, number[]>();
   pending.forEach((p, i) => {

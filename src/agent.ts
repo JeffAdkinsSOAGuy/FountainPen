@@ -4,10 +4,11 @@
 import { CascadeDoc, Item, parseStructuredNote } from './parser';
 
 export type Proposal =
-  | { kind: 'sequence'; line: number; title: string; synopsis: string; reason: string }
-  | { kind: 'goal'; line: number; id: string; want: string; subject: string[]; object?: string; for?: string; status: 'secret' | 'active'; reason: string }
+  | { kind: 'sequence'; line: number; id?: string; title: string; synopsis: string; stage?: string; reason: string }
+  | { kind: 'resume'; line: number; sequence: string; title: string; reason: string }
+  | { kind: 'goal'; line: number; id: string; want: string; subject: string[]; object?: string; for?: string; from?: string; status: 'secret' | 'active'; reason: string }
   | { kind: 'status'; line: number; goal: string; status: 'active' | 'won' | 'lost' | 'abandoned'; reason: string }
-  | { kind: 'beat'; line: number; text: string; ahead?: string; reason: string };
+  | { kind: 'beat'; line: number; text: string; ahead?: string; stage?: string; reason: string };
 export interface AgentNote { name: string; about: string }
 export interface Analysis { agents: AgentNote[]; proposals: Proposal[]; dropped: string[]; truncated: boolean; raw: string }
 export interface Part { from: number; to: number; words: number; scenes: number }
@@ -66,58 +67,76 @@ export function partsOf(text: string, doc: CascadeDoc, target = 5000): Part[] {
   return parts;
 }
 
-export const SYSTEM = `You analyse screenplays for a writer. You never rewrite the script. You only mark where its drama lies, using the model below, and every mark you make is a proposal the writer will accept or reject.
+export const SYSTEM = `You analyse screenplays for a writer. You never rewrite the script and you never invent story events. You only mark where its drama lies, using the model below. Every mark you make is a proposal the writer will accept or reject, so prefer a few marks you can defend to many you cannot.
 
 THE MODEL
 
 A script is cut two ways. The physical cut is the scene: a unit of place and time, opened by a scene heading. Scenes exist for production and carry no dramatic meaning. The dramatic cut is made of sequences and beats, which are defined by what agents want and who holds power. They are free to cross scene headings.
 
-AGENT. Anyone or anything that wants something and can act to get it. A person, a ghost, a machine, an animal or a storm can be an agent if the story gives it a will.
+AGENT. Anyone or anything that wants something and can act to get it. A person, a group, a ghost, a machine, an animal or a storm can be an agent if the story gives it a will. A known agent who takes on a new goal is not a new agent.
 
-GOAL. Something an agent wants to bring about over a stretch of story. It has a subject (the agent who wants it), a want (a short verb phrase) and usually an object (the agent or thing it is aimed at), so that it reads as a sentence: WIFE wants to divorce HUSBAND. An agent may hold several goals. One goal may exist because of another: she wants the divorce because she wants to marry someone else.
+GOAL. Something an agent wants to bring about over a stretch of story. It has a subject (the agent who wants it), a want (a short verb phrase) and usually an object (the agent or thing it is aimed at), so that it reads as a sentence: WIFE wants to divorce HUSBAND. An agent may hold several goals at once.
 
-STATUS. Every goal has a status at every point in the script. "secret" means hidden from its object (others, and the audience, may know). "active" means known to its object and being pursued. A goal ends "won", "lost" or "abandoned". A goal can only be secret if its object is an agent.
+THE GOAL TREE. Goals form a tree. A goal may serve another: he wins her over to find the bombs, and finds the bombs to stop the villain. A goal that serves no other is a top-level goal. A story usually creates its top-level goals early, and each later stretch pursues smaller goals in their service. Look for the top-level goals first, and make every smaller goal name the one it serves.
 
-SEQUENCE. A stretch of story about agents and their goals. It is either a conflict between two goals or the creation of a goal. A goal is not bound to one sequence: it may be created in one, stay secret through another and be fought over in a third.
+RAISED AND REPLACED GOALS. A goal may grow out of an earlier one. If the earlier goal stays live, the new one has been raised from it: he was using her, and now he loves her, and both goals are live. If the earlier goal is abandoned, the new one has replaced it: she gives up saving her grandmother, and selling her takes its place. Growing out of a goal is different from serving one. A new feeling, a new tactic or a new immediate aim does not by itself mean the old goal has been abandoned.
+
+STATUS. Every goal has a status at every point in the script. "secret" means its object does not know the subject is pursuing it. What the audience knows does not matter: if the audience learns of a plan before its victim does, the goal is still secret. It becomes "active" at the line where its object learns of it, including by watching or hearing a record of it. A goal can only be secret if its object is an agent. A goal ends "won", "lost" or "abandoned", and once it has ended it never changes again. Progress is not winning, a setback is not losing, and turning to something else for a while is not abandoning.
+
+SEQUENCE. A stretch of story about agents and their goals. It is a conflict between goals, a preparation for pursuing one, or the creation of one. A goal is not bound to one sequence: it may be created in one, stay secret through another and be fought over in a third.
+- A sequence may pause while another sequence plays, and resume afterwards. When the story returns to a conflict that an earlier sequence was about, and its goals are still unresolved, that earlier sequence is resuming. It is not a new sequence.
+- Agents may enter or leave during a sequence. An entrance does not end the sequence, though it may shift the power or change the goals in play.
+- A sequence often ends when a goal it is about is won or lost, while the goal above it in the tree lives on and gives rise to the next sequence. This is a tendency, not a rule.
 
 BEAT. A stretch of a sequence in which the balance of power between the agents, and what each is trying to do at that moment, stay the same. A new beat begins where the power shifts or an agent's objective changes. An objective is what an agent is trying to do right now in service of a goal. A tactic is how they go about it. A change of tactic alone does not begin a beat. A tactic that succeeds does, because it shifts the power. A scene heading does not begin a beat: if nothing turns, the beat carries on into the next scene. A passage with no agents, such as an establishing shot, belongs to no beat.
+- A sequence opens with a beat, saying where the power stands, as soon as an agent is present.
+- When a sequence resumes, a new beat begins. The beat that was in progress when it paused does not pick up again.
+
+SPINE AND STAGE. A spine is a story arc, such as the Hero's Journey: an ordered list of stages. A stage is a plot point the story is expected to reach, usually a goal being created, prepared for, fought over, raised or resolved. A stage is a label on a sequence or a beat. It is never a sequence or a goal in itself, and a story need not reach every stage or reach them in order.
 
 HOW YOU ARE GIVEN THE SCRIPT
 
-The script comes in parts, in order, a few scenes at a time. With each part you are given the ledger: the story so far, the agents and goals already found, the sequence that is open, and the beat that is in progress. Read the ledger first. A goal set up in an earlier part often decides what a moment in this part means.
+The script comes in parts, in order, a few scenes at a time. With each part you are given the ledger: the story so far, the agents, the goals with their status and place in the tree, the sequences so far with their ids, the sequence that is open, and the beat in progress. You are also told whether to propose sequences, and whether a spine is in use. Read the ledger first. A goal set up in an earlier part often decides what a moment in this part means. A new part is not a new sequence, a new beat or a new goal.
 
-In each part, [N] stands in front of every line where a mark may be placed. A mark goes immediately before that line. You may only use bracketed numbers from the current part. A beat that starts when a character speaks goes before that character's name. The part may already contain marks, written as [[beat: ...]], [[goal: ...]], [[status: ...]], [[id: ...]], lines starting with # (sequence headings) and lines starting with = (synopses). Treat existing marks as decided and do not repeat them.
+In each part, [N] stands in front of every line where a mark may be placed. A mark goes immediately before that line. You may only use bracketed numbers from the current part. A beat that starts when a character speaks goes before that character's name. If something turns in the middle of a speech or a paragraph, mark it at the next bracketed line. The part may already contain marks, written inside double square brackets, and lines starting with # (headings) or = (synopses). Treat existing marks as decided: do not repeat them and do not contradict them.
 
 HOW TO WORK ON A PART
 
-1. Decide whether the open sequence carries on through this part or a new one begins in it. A new sequence begins where the story turns to a different conflict, or to the creation of a different goal. Many parts begin and end inside the same sequence. Do not start a sequence just because a part or a scene starts.
-2. Note any agent you have not met, any goal that is created, and any goal whose status changes.
-3. Go through the part asking, at every line: who has the upper hand, and did that just change? Has what someone is trying to do just changed? Mark a beat only where the answer is yes. The beat in progress carries on from the last part unless something turns. Expect far fewer beats than the scenes have events.
+1. Sequences. Decide, in this order: does the open sequence carry on? Is the story returning to an earlier sequence whose goals are still unresolved (a resume)? Or has it turned to a conflict or a goal that no earlier sequence was about (a new sequence)? A change of scene, place, speaker or tactic is none of these. When unsure, the open sequence carries on.
+2. Entrances. When an agent enters, ask three things in order. Did the balance of power just shift? Then it is a new beat. Did someone's goal change, or did the newcomer bring one? Then declare it. Is the story now about a different conflict altogether? Only then is it a new sequence.
+3. Goals. Note any goal that is created and any goal whose status changes. For each new goal ask whether it serves a goal in the ledger, and whether it grew out of one.
+4. Beats. Go through the part asking, at every bracketed line: what is different immediately after this line that was not true immediately before it? Who has the upper hand, and did that just change? Has what someone is trying to do just changed? Mark a beat only where something has. The beat in progress carries on from the last part unless something turns. Expect far fewer beats than the scenes have events.
+5. Stages. Only if a spine is supplied: where a sequence or beat you are proposing clearly is one of its stages, name the stage on it. Leave it off when the fit is not clear.
 
 WHAT TO RETURN
 
 Return JSON Lines only: one JSON object per line, no other text, no code fences. First any new agents, then every proposal in script order, then one carry object.
 
-{"kind":"agent","name":"SUZIE","about":"one sentence on who they are and what drives them"}
-{"kind":"sequence","line":12,"title":"The Divorce","synopsis":"one sentence on what happens","reason":"conflict between divorce and reputation"}
-{"kind":"goal","line":12,"id":"divorce","want":"divorce","subject":["WIFE"],"object":"HUSBAND","for":"exclusive","status":"secret","reason":"one sentence"}
-{"kind":"status","line":80,"goal":"divorce","status":"active","reason":"she says it to his face"}
+{"kind":"agent","name":"WIFE","about":"one sentence on who they are and what drives them"}
+{"kind":"sequence","line":12,"id":"bedroom","title":"Not Until You're Divorced","synopsis":"one sentence on what happens","reason":"the creation of the divorce goal"}
+{"kind":"goal","line":12,"id":"exclusive","want":"be exclusive with","subject":["WIFE"],"object":"GIRLFRIEND","status":"active","reason":"one sentence"}
+{"kind":"goal","line":40,"id":"divorce","want":"divorce","subject":["WIFE"],"object":"HUSBAND","for":"exclusive","status":"secret","reason":"she takes it on to meet the girlfriend's condition, and he does not know"}
 {"kind":"beat","line":80,"text":"She says it","ahead":"WIFE","reason":"power shifts to her: he can no longer pretend"}
-{"kind":"carry","summary":"the story so far in under 150 words: what has happened, what each agent now wants, and who knows what"}
+{"kind":"status","line":80,"goal":"divorce","status":"active","reason":"she says it to his face"}
+{"kind":"goal","line":80,"id":"reputation","want":"protect","subject":["HUSBAND"],"object":"his reputation","status":"active","reason":"her demand creates it"}
+{"kind":"resume","line":300,"sequence":"bedroom","reason":"the story returns to the two of them with the exclusivity goal still open"}
+{"kind":"carry","summary":"the story so far in under 150 words: what has happened, what each agent now wants, who knows what, and what is still unresolved"}
 
 Rules for the fields:
 - "line" is a bracketed number from the current part.
-- Name agents exactly as the script names them in character cues, in capitals. List both individuals and groups that act with a will.
-- A goal "id" is a short lowercase word or words joined by hyphens, unique in the script: do not reuse an id from the ledger. "status" on a goal is "secret" or "active". Declare a goal at the line where it is created, or where it first bears on what happens if it is already held when the story opens.
-- A status object records a change to a goal from the ledger or from this part: "active", "won", "lost" or "abandoned", at the line where it happens. Follow the order of the script as the audience sees it, not the order of events in story time. A goal that has not resolved gets no status change.
-- Word "want" so that subject, want and object read as one sentence: SUZIE wants to "cash in" DURAND. Do not repeat the object inside "want".
-- Keep goals few. One aim is one goal, however many steps it takes: do not declare a new goal for each step, and do not declare again a goal that is already in the ledger. When the story returns to a conflict from earlier, start a new sequence but keep using the goals already declared.
+- Every "id" is a short lowercase word, or words joined by hyphens, of at most 32 characters, and is unique in the script: never reuse an id from the ledger, for a goal or a sequence.
+- Name agents exactly as the script names them in character cues, in capitals.
+- Propose "sequence" and "resume" objects only if you are told to propose sequences. A resume names the id of an earlier sequence from the ledger that is not the open one. Once the first sequence begins, everything after it belongs to a sequence, so an interlude needs one of its own or belongs to its neighbour.
+- "status" on a goal is "secret" or "active". Declare a goal at the line where it is created. If it is already held when the story opens, declare it where its holder first comes into play, and do not invent a moment of creation.
+- A status object records a change to a goal from the ledger or from this part: "active", "won", "lost" or "abandoned", at the line where it happens. Follow the order of the script as the audience sees it, not the order of events in story time. A goal that has not resolved gets no status change, and a goal that has ended gets no further change.
+- Word "want" so that subject, want and object read as one sentence. For SUZIE wants to cash in DURAND, the want is: cash in. Do not put quotation marks in it, and do not repeat the object inside it.
+- Keep goals few. One aim is one goal, however many steps it takes: do not declare a new goal for each step, and do not declare again a goal that is already in the ledger.
 - "object" is optional. Use the character's name in capitals, or plain words when the object is not a character ("the viewer", "his reputation").
-- "for" is optional. It is the id of another goal that this goal serves.
-- "ahead" is optional. It names who actually holds the power in the beat, even if someone else believes they do. Leave it out when nobody clearly has the upper hand.
-- Beat "text" is at most eight words and says what turns, in plain language. "title" is at most five words.
+- "for" is optional. It is the id of the goal this goal serves. "from" is optional. It is the id of the goal this goal grew out of. Each must name a goal declared earlier. When a goal replaces another, also give the status object that marks the old one abandoned.
+- "ahead" is optional. It names the agent who actually holds the power in the beat, even if someone else believes they do. Leave it out when nobody clearly has the upper hand.
+- "stage" is optional on sequence and beat objects, and is allowed only when a spine is supplied. It is the id of one of that spine's stages.
+- Beat "text" is at most eight words and says what turns, in plain language. "title" is at most five words. Keep every piece of text on one line, without square brackets or vertical bars.
 - "reason" is one sentence saying which shift of power or objective, or which goal, justifies the mark.
-- Propose sequences only if you are told the script has no sequence headings of its own. Once the first sequence begins, everything after it belongs to a sequence, so an interlude needs one of its own or belongs to its neighbour. A sequence need not open with a beat.
 - The carry summary replaces the one you were given, so keep what still matters from it.
 - If the script is inconsistent about a name or a detail, pick the commonest form and say nothing about it.
 
@@ -155,8 +174,11 @@ export interface Run {
   agents: AgentNote[]; proposals: Proposal[]; dropped: string[]; truncated: boolean; raw: string;
   summary: string;
   ok: Set<number>; ids: Set<string>; goalLine: Map<string, number>; closed: Set<string>;
-  goals: Map<string, { sentence: string; status: string; line: number; object?: string }>;
-  sequence: string; beat: string; firstSeen: Map<string, number>;
+  goals: Map<string, { sentence: string; status: string; line: number; object?: string; for?: string; from?: string }>;
+  sequence: string; beat: string; firstSeen: Map<string, number>; alias: Map<string, string>;
+  /** Every sequence so far, marked or proposed, in order. */ sequences: Array<{ id: string; title: string }>;
+  /** The id of the open sequence, if any. */ open: string;
+  stages: Set<string>;
 }
 
 export function startRun(text: string, doc: CascadeDoc, targetWords = 5000): Run {
@@ -171,8 +193,9 @@ export function startRun(text: string, doc: CascadeDoc, targetWords = 5000): Run
     summary: '', ok, ids, firstSeen,
     goalLine: new Map(doc.goals.map(g => [g.id, g.line])),
     closed: new Set(doc.goals.filter(g => ['won', 'lost', 'abandoned'].includes(g.status)).map(g => g.id)),
-    goals: new Map(doc.goals.map(g => [g.id, { sentence: sentence(g), status: g.status, line: g.line, object: g.object }])),
-    sequence: '', beat: '',
+    goals: new Map(doc.goals.map(g => [g.id, { sentence: sentence(g), status: g.status, line: g.line, object: g.object, for: g.for, from: g.from }])),
+    sequence: '', beat: '', sequences: [], open: '', alias: new Map(),
+    stages: new Set(doc.spines.flatMap(sp => sp.stages.map(st => st.id))),
   };
 }
 
@@ -181,19 +204,27 @@ export function partMessage(run: Run): string | null {
   const part = run.parts[run.k];
   if (!part) return null;
   const L = lines(run.text), n = run.parts.length;
-  // sequences and beats already marked in the script before this part count as the open ones
+  // sequences and beats already marked in the script before this part count as the ones so far
+  const marked = walk(run.doc.children, 'section').filter((x: any) => x.line < part.from && x.level === 'sequence');
   const before = (type: string) => walk(run.doc.children, type).filter((x: any) => x.line < part.from).pop();
-  const seq = run.sequence || before('section')?.title || '', beat = run.beat || before('beat')?.text || '';
-  const goals = [...run.goals.entries()].map(([id, g]) => `- ${id}: ${g.sentence} (${g.status})`).join('\n');
+  const lastMarked = marked[marked.length - 1];
+  const seq = run.sequence || (lastMarked ? `${lastMarked.resumes ?? lastMarked.id ?? ''}: ${lastMarked.title}` : ''), beat = run.beat || before('beat')?.text || '';
+  const sofar = [...marked.filter((x: any) => x.id).map((x: any) => ({ id: x.id as string, title: x.title as string })), ...run.sequences];
+  const goals = [...run.goals.entries()].map(([id, g]) => `- ${id}: ${g.sentence} (${g.status}${g.for ? `, serves ${g.for}` : ', top-level'}${g.from ? `, grew out of ${g.from}` : ''})`).join('\n');
   const tail = run.k === 0 ? '' : L.slice(Math.max(run.doc.bodyStart - 1, part.from - 13), part.from - 1).map(l => l.trim()).filter(l => l && !isMarkup(l)).join('\n');
+  const spine = run.doc.spines.length
+    ? run.doc.spines.map(sp => `Spine in use: ${sp.name}. Name a stage where the fit is clear. Its stages, in order:\n${sp.stages.map(st => `- ${st.id}: ${st.name}${st.about ? `. ${st.about}` : ''}`).join('\n')}`).join('\n')
+    : 'No spine is in use, so do not name stages.';
   return [
     run.doc.titlePage['title'] ? `Title: ${run.doc.titlePage['title']}` : '',
     `This is part ${run.k + 1} of ${n}${run.k === n - 1 ? ', the last part' : ''}.`,
-    run.doc.stats.sequences ? 'The script has sequence headings of its own, so do not propose sequences.' : 'The script has no sequence headings of its own, so propose them.',
+    run.doc.stats.sequences ? 'The script has sequence headings of its own, so do not propose sequence or resume objects.' : 'The script has no sequence headings of its own, so propose sequences, and resumes where an earlier sequence returns.',
+    spine,
     '<ledger>',
     `Story so far: ${run.summary || (run.k === 0 ? 'Nothing yet. This is the opening.' : 'No summary was carried over.')}`,
     `Agents: ${run.agents.length ? run.agents.map(a => `${a.name} (${a.about})`).join('; ') : 'none yet'}`,
     `Goals:\n${goals || 'none yet'}`,
+    `Sequences so far:\n${sofar.length ? sofar.map(x => `- ${x.id}: ${x.title}`).join('\n') : 'none yet'}`,
     `Open sequence: ${seq || 'none yet'}`,
     `Beat in progress: ${beat || 'none'}`,
     '</ledger>',
@@ -215,8 +246,9 @@ export function absorb(run: Run, raw: string): void {
     const kind = str(o.kind), reason = str(o.reason);
     if (kind === 'agent') { if (str(o.name) && !run.agents.some(a => a.name === str(o.name))) run.agents.push({ name: str(o.name), about: str(o.about) }); return; }
     if (kind === 'carry') { if (str(o.summary)) run.summary = str(o.summary); return; }
-    if (!['beat', 'goal', 'sequence', 'status'].includes(kind)) return;
-    const what = kind === 'beat' ? `beat "${str(o.text)}"` : kind === 'goal' ? `goal "${str(o.id)}"` : kind === 'sequence' ? `sequence "${str(o.title)}"` : `status change for "${str(o.goal)}"`;
+    if (!['beat', 'goal', 'sequence', 'resume', 'status'].includes(kind)) return;
+    const stage = (() => { const st = str(o.stage).split('/').pop()!.trim(); return st && run.stages.has(st) ? st : undefined; })();
+    const what = kind === 'beat' ? `beat "${str(o.text)}"` : kind === 'goal' ? `goal "${str(o.id)}"` : kind === 'sequence' ? `sequence "${str(o.title)}"` : kind === 'resume' ? `resume of "${str(o.sequence)}"` : `status change for "${str(o.goal)}"`;
     let line = Number(o.line);
     if (!run.ok.has(line)) {                       // inside a paragraph or speech: move to where it starts
       let at = line;
@@ -228,23 +260,38 @@ export function absorb(run: Run, raw: string): void {
     if (part && (line < part.from || line > part.to)) { run.dropped.push(`Dropped the ${what}: line ${line} is outside the part being read.`); return; }
     if (kind === 'beat') {
       if (!str(o.text)) return;
-      run.proposals.push({ kind, line, text: str(o.text), ahead: str(o.ahead) || undefined, reason });
+      run.proposals.push({ kind, line, text: str(o.text), ahead: str(o.ahead) || undefined, stage, reason });
       run.beat = str(o.text) + (str(o.ahead) ? ` (${str(o.ahead)} ahead)` : '');
     } else if (kind === 'sequence') {
       if (run.doc.stats.sequences) { run.dropped.push(`Dropped the ${what}: this script already has sequences.`); return; }
       if (!str(o.title)) return;
       const title = str(o.title).replace(/^#+\s*/, '');
-      run.proposals.push({ kind, line, title, synopsis: str(o.synopsis), reason });
-      run.sequence = title + (str(o.synopsis) ? `: ${str(o.synopsis)}` : ''); run.beat = '';
+      let id = str(o.id).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32);
+      if (!id || run.ids.has(id)) { let k = 1; while (run.ids.has('q' + k)) k++; run.alias.set(id || '?', 'q' + k); id = 'q' + k; }
+      run.ids.add(id);
+      run.proposals.push({ kind, line, id, title, synopsis: str(o.synopsis), stage, reason });
+      run.sequences.push({ id, title }); run.open = id;
+      run.sequence = `${id}: ${title}` + (str(o.synopsis) ? ` (${str(o.synopsis)})` : ''); run.beat = '';
+    } else if (kind === 'resume') {
+      if (run.doc.stats.sequences) { run.dropped.push(`Dropped the ${what}: this script already has sequences.`); return; }
+      const want = str(o.sequence), id = run.alias.get(want) ?? want;
+      const target = run.sequences.find(x => x.id === id);
+      if (!target) { run.dropped.push(`Dropped the ${what}: no earlier sequence has that id.`); return; }
+      if (run.open === id) return;                                   // it never paused: nothing to mark
+      run.proposals.push({ kind: 'resume', line, sequence: id, title: target.title, reason });
+      run.open = id; run.sequence = `${id}: ${target.title} (resumed)`; run.beat = '';
     } else if (kind === 'goal') {
       const id = str(o.id).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32);
       const subject = names(o.subject);
+      o.want = str(o.want).replace(/^["'“”]+|["'“”]+$/g, '');
       if (!id || !subject.length || !str(o.want)) { run.dropped.push(`Dropped the ${what}: it had no id, subject or want.`); return; }
       if (run.ids.has(id)) { run.dropped.push(`Dropped the ${what}: that ID is already in use.`); return; }
       const object = str(o.object) || undefined, status = o.status === 'secret' && object ? 'secret' : 'active';
       run.ids.add(id); run.goalLine.set(id, line);
-      run.proposals.push({ kind, line, id, want: str(o.want), subject, object, for: str(o.for) || undefined, status, reason });
-      run.goals.set(id, { sentence: sentence({ subject, want: str(o.want), object }), status, line, object });
+      const known = (v: unknown) => (str(v) && run.goalLine.has(str(v)) && str(v) !== id ? str(v) : undefined);
+      const parent = known(o.for), origin = known(o.from);
+      run.proposals.push({ kind, line, id, want: str(o.want), subject, object, for: parent, from: origin, status, reason });
+      run.goals.set(id, { sentence: sentence({ subject, want: str(o.want), object }), status, line, object, for: parent, from: origin });
     } else {
       const goal = str(o.goal), status = str(o.status);
       if (!['active', 'won', 'lost', 'abandoned'].includes(status)) { run.dropped.push(`Dropped the ${what}: "${status}" is not a status.`); return; }
@@ -283,8 +330,10 @@ export function absorbHindsight(run: Run, raw: string): void {
   jsonObjects(raw).objects.forEach((o: any) => {
     if (str(o?.kind) !== 'hindsight') return;
     const g = run.proposals.find(p => p.kind === 'goal' && p.id === str(o.goal)) as Extract<Proposal, { kind: 'goal' }> | undefined;
-    const line = Number(o.line);
-    if (!g || !g.object || !allowed.has(line) || line >= g.line) return;
+    let line = Number(o.line);
+    // a goal cannot be declared before the goals it names, so go no earlier than they are
+    for (const dep of [g?.for, g?.from]) if (dep && allowed.has(line)) line = Math.max(line, run.goalLine.get(dep) ?? 0);
+    if (!g || !g.object || !run.ok.has(line) || line >= g.line) return;
     const shown = g.line;
     run.goalLine.set(g.id, line);
     if (g.status === 'active' && !run.proposals.some(p => p.kind === 'status' && p.goal === g.id && p.line === shown))
@@ -297,7 +346,7 @@ export function absorbHindsight(run: Run, raw: string): void {
 /** Everything the run has found, in script order. */
 export function result(run: Run): Analysis {
   for (const p of run.proposals) if (p.kind === 'goal' && p.for && !run.ids.has(p.for)) p.for = undefined;
-  const order = { sequence: 0, beat: 1, status: 2, goal: 3 };
+  const order = { sequence: 0, resume: 0, beat: 1, status: 2, goal: 3 };
   run.proposals.sort((a, b) => a.line - b.line || order[a.kind] - order[b.kind]);
   return { agents: run.agents, proposals: run.proposals, dropped: run.dropped, truncated: run.truncated, raw: run.raw };
 }
