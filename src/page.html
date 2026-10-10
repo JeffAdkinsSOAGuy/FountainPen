@@ -4,16 +4,16 @@
 /* Layout: a one-screen workbench. Outline rail on the left, the script as a sheet of paper on a desk on the right. */
 :root {
   --desk: #e4e7ee; --panel: #f3f5f9; --paper: #ffffff; --ink: #1b2233; --muted: #5d6781;
-  --line: #cdd3df; --pen: #1d3fa8; --pen-soft: #e3e9fa; --warn: #a15400; --ok: #1c6b45;
+  --line: #cdd3df; --pen: #1d3fa8; --pen-soft: #e3e9fa; --warn: #a15400; --ok: #1c6b45; --bad: #a3262f;
   --ui: "Instrument Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --script: "Courier Prime", "Courier New", Courier, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --desk: #10131b; --panel: #171b26; --paper: #1e2330; --ink: #e6e9f2; --muted: #98a2bb;
-  --line: #2f3647; --pen: #9db4ff; --pen-soft: #263156; --warn: #f0b062; --ok: #7ed0a4; color-scheme: dark } }
+  --line: #2f3647; --pen: #9db4ff; --pen-soft: #263156; --warn: #f0b062; --ok: #7ed0a4; --bad: #f08a90; color-scheme: dark } }
 :root[data-theme="dark"] {
   --desk: #10131b; --panel: #171b26; --paper: #1e2330; --ink: #e6e9f2; --muted: #98a2bb;
-  --line: #2f3647; --pen: #9db4ff; --pen-soft: #263156; --warn: #f0b062; --ok: #7ed0a4; color-scheme: dark }
+  --line: #2f3647; --pen: #9db4ff; --pen-soft: #263156; --warn: #f0b062; --ok: #7ed0a4; --bad: #f08a90; color-scheme: dark }
 
 html, body { height: 100%; }
 body { background: var(--desk); color: var(--ink); font: 14px/1.45 var(--ui); display: grid; grid-template-rows: auto 1fr; overflow: hidden; }
@@ -53,15 +53,36 @@ button, input { font: inherit; color: inherit; }
 .o-count { grid-column: 1 / -1; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .o-syn { margin: 0 6px 6px; color: var(--muted); font-style: italic; }
 .o-id { font: 11px var(--script); color: var(--muted); }
-.o-scene, .o-beat { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: baseline; width: 100%; text-align: left; background: transparent; border: 0; border-radius: 4px; padding: 5px 6px; cursor: pointer; }
-.o-scene:hover, .o-beat:hover { background: var(--pen-soft); }
-.o-scene .o-text { font: 700 12.5px/1.35 var(--script); text-transform: uppercase; overflow-wrap: anywhere; }
-.o-scene.here { background: var(--pen-soft); } .o-scene.here .o-text { color: var(--pen); }
+.o-scene, .o-beat, .o-goal { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: baseline; width: 100%; text-align: left; background: transparent; border: 0; border-radius: 4px; padding: 5px 6px; cursor: pointer; }
+.o-scene:hover, .o-beat:hover, .o-goal:hover { background: var(--pen-soft); }
+/* a scene is the physical cut: a quiet slug line between the beats */
+.o-scene { padding-block: 3px; margin-top: 4px; }
+.o-scene .o-text { font: 400 11.5px/1.35 var(--script); text-transform: uppercase; color: var(--muted); overflow-wrap: anywhere; }
+.o-scene .o-text::before { content: "\2014\00a0"; }
+.o-scene.here .o-text { color: var(--pen); font-weight: 700; }
+/* a beat is the dramatic cut: the primary row */
+.o-beat { margin-left: 10px; width: calc(100% - 10px); border-left: 2px solid var(--line); border-radius: 0 4px 4px 0; padding-left: 10px; }
+.o-beat .o-text { color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
+.o-beat.here { background: var(--pen-soft); border-left-color: var(--pen); }
+.o-meta { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--muted); }
+.o-meta:empty { display: none; }
+.o-ahead { color: var(--pen); font-weight: 500; }
 .o-len { grid-column: 1 / -1; height: 3px; background: var(--line); border-radius: 2px; }
 .o-len i { display: block; height: 100%; background: var(--pen); border-radius: 2px; opacity: 0.55; }
-.o-beats { margin: 0 0 6px 10px !important; padding-left: 10px !important; border-left: 1px solid var(--line); }
-.o-beat { padding: 3px 6px; } .o-beat .o-text { color: var(--ink); overflow-wrap: anywhere; }
-.o-section .o-section > details > summary { padding-left: 6px; }
+/* goals in play in a sequence */
+.o-goals { display: flex; flex-direction: column; gap: 2px; margin: 2px 0 8px !important; padding: 6px 0 !important; border-block: 1px dashed var(--line); }
+.o-goal { grid-template-columns: minmax(0, 1fr); font-size: 13px; }
+.o-goal .o-text { overflow-wrap: anywhere; }
+.o-for { color: var(--muted); display: block; font-size: 12px; }
+.o-for b { font-weight: 500; }
+.o-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.arrow { color: var(--muted); font-size: 11px; }
+.st { font: 500 10.5px/1.5 var(--ui); letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 3px; padding: 0 5px; white-space: nowrap; }
+.st-secret { color: var(--muted); border-style: dashed; }
+.st-active { color: var(--pen); }
+.st-won { color: var(--ok); }
+.st-lost { color: var(--bad); }
+.st-abandoned { color: var(--muted); text-decoration: line-through; }
 #problems { font-size: 13px; margin-top: auto; padding-top: 10px; border-top: 1px solid var(--line); }
 #problems .ok { margin: 0; color: var(--ok); } #problems summary { color: var(--warn); font-weight: 600; cursor: pointer; }
 #problems ul { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
@@ -82,8 +103,11 @@ button, input { font: inherit; color: inherit; }
 #page .m-section { font-weight: 600; font-size: 16px; letter-spacing: -0.01em; border-top: 1px solid var(--line); padding-top: 14px; margin: 2.4em 0 0.3em; }
 #page .m-section.d2, #page .m-section.d3 { font-size: 14px; }
 #page .m-syn { color: var(--muted); font-style: italic; margin-bottom: 1em; }
-#page .m-beat { margin: 1.6em 0 0.5em; display: flex; gap: 8px; align-items: baseline; }
-.m-beat span { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 3px; padding: 0 5px; flex: none; }
+#page .m-beat, #page .m-goal { margin: 1.6em 0 0.5em; display: flex; gap: 8px; align-items: baseline; }
+#page .m-goal { margin: 0.4em 0 0.5em; color: var(--ink); }
+#page .m-beat + .m-goal, #page .m-goal + .m-goal { margin-top: -0.2em; }
+.m-beat em { color: var(--muted); font-style: normal; font-size: 12px; margin-left: 6px; }
+.m-beat > span:first-child, .m-goal > span:first-child { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid currentColor; border-radius: 3px; padding: 0 5px; flex: none; }
 #page .m-anchor { display: block; margin: 0; height: 0; }
 body[data-markup="off"] .m { display: none; }
 .flash { animation: flash 1.2s ease-out; }
@@ -102,7 +126,7 @@ body[data-markup="off"] .m { display: none; }
   <span class="brand">FountainPen</span>
   <div class="doc"><span id="doc-title"></span><span id="doc-sample" hidden>sample script</span><span id="stats"></span></div>
   <div class="tools">
-    <label class="check" for="markup"><input type="checkbox" id="markup" checked> Show sequences and beats in the script</label>
+    <label class="check" for="markup"><input type="checkbox" id="markup" checked> Show sequences, goals and beats in the script</label>
     <label class="open" for="file">Open script<input type="file" id="file" accept=".fountain,.txt,.spmd,text/plain"></label>
   </div>
   <div class="tabs" role="group" aria-label="View">

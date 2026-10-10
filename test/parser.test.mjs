@@ -4,25 +4,48 @@ import { readFileSync } from 'node:fs';
 import { parse, parseStructuredNote } from '../dist/parser.mjs';
 
 const md = parse(readFileSync(new URL('./fixtures/moral-dilemma.fountain', import.meta.url), 'utf8'));
-const scenes = n => n.flatMap(c => (c.type === 'scene' ? [c] : scenes(c.children)));
+const all = (n, type) => n.flatMap(c => [...(c.type === type ? [c] : []), ...(c.type === 'section' ? all(c.children, type) : [])]);
+const goal = id => md.goals.find(g => g.id === id);
 
 test('Moral Dilemma: counts', () => {
   assert.deepEqual(md.levels, ['sequence']);
-  assert.equal(md.stats.sequences, 6);
-  assert.equal(md.stats.scenes, 13);
-  assert.equal(md.stats.beats, 41);
-  assert.equal(md.stats.ids, 6 + 13 + 41);
+  assert.deepEqual(md.stats, { sections: 5, sequences: 5, scenes: 13, beats: 22, goals: 8, ids: 5 + 13 + 22 + 8 });
   assert.deepEqual(md.diagnostics, []);
 });
-test('Moral Dilemma: structure', () => {
-  assert.deepEqual(md.children.map(s => [s.id, s.title, scenes(s.children).length]), [
-    ['q1', 'The Warning', 2], ['q2', 'The Host', 2], ['q3', 'The Boyfriend', 5],
-    ['q4', 'A Word from Our Sponsor', 1], ['q5', 'Nana', 1], ['q6', 'The Turn', 2]]);
-  assert.equal(md.children[0].synopsis, 'A narrator warns that this broadcast comes from one possible future.');
-  const all = scenes(md.children);
-  assert.deepEqual(all.map(s => s.id), Array.from({ length: 13 }, (_, i) => 's' + (i + 1)));
-  assert.equal(all[0].beats.length, 0);                       // a scene may have no beats
-  assert.equal(all[0].heading, 'INT. GAME SHOW SET - DAY');   // forced "." is stripped
+test('Moral Dilemma: sequences', () => {
+  assert.deepEqual(md.children.filter(c => c.type === 'section').map(s => [s.id, s.title, all(s.children, 'scene').length, all(s.children, 'beat').length]), [
+    ['q1', 'The Warning', 2, 2], ['q3', 'The Boyfriend', 7, 9], ['q4', 'A Word from Our Sponsor', 1, 1],
+    ['q5', 'Nana', 1, 7], ['q6', 'The Turn', 2, 3]]);
+  assert.equal(md.children.find(c => c.type === 'section').synopsis, 'A narrator from one possible future sets out to warn us.');
+});
+test('a beat runs across scene headings', () => {
+  const beats = all(md.children, 'beat');
+  const arrival = beats.find(b => b.id === 'b6');
+  assert.equal(arrival.scenes.length, 3);                         // car, entrance, set
+  assert.equal(arrival.endLine, beats.find(b => b.id === 'b8').line - 1);
+  const p = parse('INT. A - DAY\n\n[[beat: One]]\n\nHe runs.\n\nINT. B - DAY\n\nHe hides.\n\n[[beat: Two]]\n\nShe finds him.');
+  assert.deepEqual(all(p.children, 'beat').map(b => [b.text, b.line, b.endLine, b.scenes.length]), [['One', 3, 10, 2], ['Two', 11, 13, 1]]);
+});
+test('a beat ends with its sequence', () => {
+  const p = parse('Title: T\nStructure: sequence\n\n# One\n\n[[beat: A]]\n\nINT. A - DAY\n\nHe waits.\n\n# Two\n\nINT. B - DAY\n\nNobody.');
+  const b = all(p.children, 'beat')[0];
+  assert.equal(b.endLine, 11);
+  assert.equal(all(p.children, 'beat').length, 1);
+});
+test('goals: subject, object, for, and status history', () => {
+  assert.deepEqual([goal('durand').subject, goal('durand').object, goal('durand').for], [['SUZIE'], 'DURAND', 'money']);
+  assert.deepEqual(goal('scheme').history.map(h => h.status), ['secret', 'active', 'lost']);
+  assert.deepEqual(goal('payout').history.map(h => h.status), ['secret', 'active', 'lost']);
+  assert.equal(goal('cure').status, 'abandoned');
+  assert.equal(goal('corrupt').status, 'won');
+  assert.equal(goal('warn').status, 'active');                     // never resolved
+  const p = parse('[[goal: sex | id: sex | subject: WIFE, GIRLFRIEND]]\n');
+  assert.deepEqual(p.goals[0].subject, ['WIFE', 'GIRLFRIEND']);
+});
+test('goal and status problems are reported', () => {
+  const src = ['[[goal: divorce | subject: WIFE]]', '[[goal: divorce | id: d | subject: WIFE | for: nope]]', '[[status: won | goal: d]]',
+    '[[status: lost | goal: d]]', '[[status: happy | goal: d]]', '[[status: won | goal: zz]]'].join('\n\n');
+  assert.deepEqual(parse(src).diagnostics.map(x => x.line), [1, 3, 7, 9, 11]);
 });
 test('first colon separates key from value', () => {
   const n = parseStructuredNote('[[beat: The offer: 45,000 or risk the video | id: b15]]');

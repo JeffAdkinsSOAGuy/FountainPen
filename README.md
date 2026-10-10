@@ -2,9 +2,9 @@
 
 A script editor built on [Fountain Cascade](https://github.com/JeffAdkinsSOAGuy/fountain-cascade), an extension of the Fountain screenplay syntax.
 
-**Status:** first slice. It opens a script and shows its sequences, scenes, and beats beside the text. It does not edit yet.
+**Status:** first slice. It opens a script and shows its drama beside the text: sequences, the goals in play in each, and the beats, with scene headings as quiet markers between them. It does not edit yet.
 
-**Supports:** Fountain Cascade v0.1.1.
+**Supports:** Fountain Cascade v0.2.
 
 ## Run it
 
@@ -27,7 +27,7 @@ npm test
 
 | Path | What it is |
 |---|---|
-| `src/parser.ts` | The Cascade parser. Text in; sections, scenes, beats, IDs, and markup problems out. No dependencies. |
+| `src/parser.ts` | The Cascade parser. Text in; sections, scenes, goals with their status history, beats, IDs, and markup problems out. No dependencies. |
 | `src/render.ts` | Lays script lines out for display (scene heading, action, dialogue). Display only. |
 | `src/view.ts` | The outline view. |
 | `src/page.html` | The page and its styles. |
@@ -37,6 +37,7 @@ npm test
 ## Not built yet
 
 - Editing the script or the markup
-- Story spines (Cascade v0.2)
-- Co-writer alternatives (Cascade v0.3)
+- The beat agent: an AI pass that reads a whole script and proposes goals, sequences, and beats for you to accept or reject
+- Story spines (planned for Cascade v0.3)
+- Co-writer alternatives (planned for Cascade v0.4)
 - A desktop wrapper

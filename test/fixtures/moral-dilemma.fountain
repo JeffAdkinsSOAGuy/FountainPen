@@ -7,7 +7,9 @@ Structure: sequence
 
 [[id: q1]]
 
-= A narrator warns that this broadcast comes from one possible future.
+[[goal: warn | id: warn | subject: NARRATOR | object: the viewer]]
+
+= A narrator from one possible future sets out to warn us.
 
 .INT. GAME SHOW SET - DAY
 
@@ -23,7 +25,7 @@ Static engulfs the screen. As it comes into focus, a game show TV set with a red
 
 A game show TV set with a red box on the floor for the contestant to stand, a plastic wall behind them with the logo of "Moral Dilemma," and a picture of a very well-dressed man.
 
-[[beat: The Narrator breaks the fourth wall | id: b1]]
+[[beat: The Narrator gets our attention | id: b1 | ahead: NARRATOR]]
 
 !NARRATOR stands looking straight at the audience and knocks on the screen.
 
@@ -32,14 +34,10 @@ A game show TV set with a red box on the floor for the contestant to stand, a pl
 
 Insert a series of quick visuals: barren supermarkets, overcrowded urban streets, and fields of dead crops under a gray sky. The visuals are harsh and unforgiving.
 
-[[beat: The world that made the show | id: b2]]
-
                 NARRATOR (V.O.)
     Food is running out, and resources are dwindling, forcing societies to embrace extreme solutions. In this grim reality, morality has become entertainment, and life-and-death decisions are made for the sake of ratings.
 
             >THE CAMERA SHIFTS BACK TO THE GAME SHOW SET.:
-
-[[beat: Moral Dilemma, where relationships have a price | id: b3]]
 
 The scrolling faces on the plexiglass screen become sharper and more unsettling, each one paired with a numeric value, hinting at the currency of human relationships.
 
@@ -51,14 +49,14 @@ The screen flickers with static, creating a ripple effect as if the broadcast is
                 NARRATOR
     "Ahh, the theme song. This show answers the age-old question: 'What is a relationship really worth?'”
 
+[[beat: He turns it on the viewer | id: b42 | ahead: NARRATOR]]
+
 !Narrator listens to the music for a second. The narrator looks at the board.
 
                 NARRATOR
     See anyone you know?
 
 Screen flickers with static, creating a ripple effect as if the broadcast is distorting. The world of the game show seems to bleed into the present day, giving the impression that something unnatural is occurring.
-
-[[beat: How this future is reaching you | id: b4]]
 
 !Narrator hits the camera. Static clears up.
 
@@ -67,8 +65,6 @@ Screen flickers with static, creating a ripple effect as if the broadcast is dis
 
 The camera zooms out, revealing the set in its entirety, the lights flashing in anticipation of the show’s beginning.
 
-[[beat: The question the show asks | id: b5]]
-
                 NARRATOR
     So, dear viewer, brace yourself. Ask not what others are worth... but what price you would put on love. Because in this world, everything—even relationships—has a price tag. This show answers the age-old question - "What is a relationship really worth?"
 
@@ -76,17 +72,19 @@ The camera zooms out, revealing the set in its entirety, the lights flashing in 
 
             >RESOLVE TO THE LICENSE PLATE OF A FUTURISTIC CAR:
 
-# The Host
+# The Boyfriend
 
-[[id: q2]]
+[[id: q3]]
 
-= Archibald Duke makes his entrance.
+[[goal: corrupt | id: corrupt | subject: ARCHIBALD | object: SUZIE]]
+
+= Suzie bets her boyfriend's life on a video, not knowing he planned to bet hers.
 
 .INT. GAME SHOW OPENING SEQUENCE- DAY
 
 [[id: s3]]
 
-[[beat: Archibald arrives like a star | id: b6]]
+[[beat: Archibald arrives like a star | id: b6 | ahead: ARCHIBALD]]
 
 ARCHIBALD drives an expensive, futuristic car, gets out, hands the keys and a one hundred dollar bill to the valet.
 
@@ -99,8 +97,6 @@ He goes through curtains that are there.
 .INT. GAME SHOW ENTRANCE - DAY
 
 [[id: s4]]
-
-[[beat: Who wants some of my money? | id: b7]]
 
 ARCHIBALD, the larger-than-life, immaculately dressed host, comes out from behind curtains to a tremendous amount of cheers. He orchestrates the applause, feeding on the attention.
 
@@ -120,12 +116,6 @@ ARCHIBALD, the larger-than-life, immaculately dressed host, comes out from behin
 
             >CUT TO:
 
-# The Boyfriend
-
-[[id: q3]]
-
-= Suzie gambles her boyfriend's life on a video and loses.
-
 .INT. GAME SHOW SET - CONTINUOUS
 
 [[id: s5]]
@@ -136,7 +126,9 @@ ARCHIBALD joins the scene from Stage Right.
 
 SUZIE, 20s, stands in the Red Box, clapping along with the audience.
 
-[[beat: Suzie is welcomed back | id: b8]]
+[[beat: Archibald turns to Suzie | id: b8 | ahead: ARCHIBALD]]
+
+[[goal: win | id: money | subject: SUZIE | object: the record payout]]
 
                 ARCHIBALD
     Welcome back to another exciting episode of Moral Dilemma. Last time, we ran out of time before our contestant could finish. Everyone remembers the beautiful Suzie. Welcome back, Suzie.
@@ -154,8 +146,6 @@ SUZIE, 20s, stands in the Red Box, clapping along with the audience.
                 SUZIE
         (star-struck)
     Ok. Archibald.
-
-[[beat: Recap: Suzie sold her Pilates instructor | id: b9]]
 
                 ARCHIBALD
     Let see what has happened thus far. You were only able to pick one victim.
@@ -177,8 +167,6 @@ SUZIE, 20s, stands in the Red Box, clapping along with the audience.
 
 !Archibald pan mime a noose. Audience laughs.
 
-[[beat: How the game works | id: b10]]
-
                 ARCHIBALD
     Thomas, tell our first-time viewers how this game works.
 
@@ -189,10 +177,10 @@ SUZIE, 20s, stands in the Red Box, clapping along with the audience.
 
 !BACK TO SCENE
 
-[[beat: Suzie's strategy is to collect friends as inventory | id: b11]]
-
                 ARCHIBALD
     In the case of your Pilates instructor, you decided to keep the original offer and not watch the evidence. If you had, it would have gone down to 1200 dollars. You were pretty lucky.
+
+[[beat: Suzie wins the room | id: b43 | ahead: SUZIE]]
 
                 SUZIE
     That wasn't luck! It's game strategy. I'm betting my life on this game. I am a relationship-making machine! I make friends literally everywhere I go.
@@ -216,8 +204,6 @@ SUZIE, 20s, stands in the Red Box, clapping along with the audience.
         (shouts)
     CASH!
 
-[[beat: The audience adopts Suzie | id: b12]]
-
                 ARCHIBALD
     Well... Audience. Do we like Suzie?
 
@@ -235,8 +221,6 @@ SUZIE, 20s, stands in the Red Box, clapping along with the audience.
 
                 ARCHIBALD
     Thomas, add another potential victim. Let's get this girl some Money!
-
-[[beat: Four squares and one record bounty | id: b13]]
 
 !Four Squares appear on the screen behind Suzie. They have the letters "A", "B", "C", and "D" as well as the image of Phillis.
 
@@ -272,13 +256,15 @@ SUZIE, 20s, stands in the Red Box, clapping along with the audience.
                 ARCHIBALD
     I need a decision. The crowd seems to like C.
 
-[[beat: Suzie picks B, her boyfriend Durand | id: b14]]
-
                 SUZIE
     I pick B. B as in Boy.
 
                 ARCHIBALD
     Okay! Let's see B.
+
+[[beat: Durand goes on the block | id: b44 | ahead: SUZIE]]
+
+[[goal: cash in | id: durand | subject: SUZIE | object: DURAND | for: money]]
 
 !The B is revealed and DURAND, handsome late 20s., is there. Suzie is enthusiastically dancing around.
 
@@ -300,8 +286,6 @@ SUZIE, 20s, stands in the Red Box, clapping along with the audience.
                 SUZIE
         (conspiratorial)
     Well, I have spies.
-
-[[beat: The offer: 45,000 or risk the video | id: b15]]
 
                 ARCHIBALD
     Well... He is worth 45,000 dollars right now. No questions asked.
@@ -348,8 +332,6 @@ The apartment boasts a futuristic marvel, an entire wall transformed into an int
 
 !DURAND FENWICK (mid-20s), an exceptionally handsome and charismatic man, sits on his bed, gazing at the wall filled with cherished memories. His chiseled features and magnetic presence draw immediate attention, leaving no doubt about his captivating allure. A hint of vulnerability lurks beneath his confident facade, adding depth to his enigmatic persona.
 
-[[beat: The sample shows Durand with a ring | id: b16]]
-
 !BARRY comes into the Room. The wall "window" disappears.
 
                 BARRY
@@ -366,13 +348,9 @@ Video freezes.
 
 The game show set consists of a red outlined box on the floor and an electronic plexiglass screen behind the box. An image of the ring and Durand appear on the screen.
 
-[[beat: Suzie thinks he will propose | id: b17]]
-
                 SUZIE
         (screams)
     He's going to ask me to marry him!
-
-[[beat: Archibald offers her the way out | id: b18]]
 
                 ARCHIBALD
     He seems like such a nice boy. Maybe you just want to leave the show now, keep the money you earned, and marry him.
@@ -388,8 +366,6 @@ The game show set consists of a red outlined box on the floor and an electronic 
 
                 ARCHIBALD
     Do you want to take your chances and see the rest of the video or keep the 45k for his life?
-
-[[beat: Suzie chooses the video | id: b19]]
 
 !SUZIE doesn't hesitate and starts to do her happy dance.
 
@@ -423,7 +399,7 @@ On the wall, a "window" opens showing outside of the door.
                 COMPUTER (V.O)
     Barry is here. One registered weapon found. Identified as a resident, admitting.
 
-[[beat: Barry brings news that Durand will be a contestant | id: b20]]
+[[beat: Barry brings news that Durand will be a contestant | id: b20 | ahead: BARRY]]
 
 !BARRY comes into the Room. The wall "window" disappears.
 
@@ -458,8 +434,6 @@ insert ring opening up
 
 !Barry nods, enjoying Durand's reaction.
 
-[[beat: The scheme: a fiancée raises the payout | id: b21]]
-
                 DURAND
         (grinning)
     But why the ring?
@@ -476,15 +450,17 @@ insert ring opening up
 
 !Realization creeps over Durand's face.
 
+[[goal: cash in | id: scheme | subject: DURAND | object: SUZIE | status: secret]]
+
                 DURAND
     You're a freaking genius! Your ability to twist the most innocent ideas into brilliant masterpieces of deception is sheer dark artistry! You Rock!
 
 !Barry and Durand hug; a good guy hug.
 
-[[beat: Choosing a victim from the wall | id: b22]]
-
                 BARRY
     Now. We need to pick someone sympathetic and totally in love with you. someone who'll make the audience really feel the weight of the decision.
+
+[[beat: Durand takes over the scheme | id: b45 | ahead: DURAND]]
 
 !Durand nods and stands.
 
@@ -511,7 +487,7 @@ insert ring opening up
                 DURAND
     No. She's too cute! And besides she is totally empathetic and you know how empathetic women like too please.
 
-[[beat: Durand remembers Suzie's kindness | id: b23]]
+[[beat: Suzie's kindness gets to him | id: b23]]
 
                 BARRY
     Susie?
@@ -541,8 +517,6 @@ insert ring opening up
 
 !Durand nods.
 
-[[beat: Durand chooses the money | id: b24]]
-
                 BARRY
         (moved)
     Sounds like Suzie might be "the one."
@@ -550,6 +524,8 @@ insert ring opening up
                 DURAND
         (Shaken)
     Whoa! Wait! You mean "the one" the one? Like actually marry her... for real?
+
+[[beat: Durand chooses the money | id: b46 | ahead: BARRY]]
 
                 BARRY
     She is cute and all, but do you want a cute, happy wife or a rich, happy life?
@@ -567,7 +543,9 @@ Image freezes
 
 The game show set consists of a red outlined box on the floor and an electronic plexiglass screen behind the box.
 
-[[beat: Suzie is crushed and Durand's value collapses | id: b25]]
+[[beat: Suzie sees what she was to him | id: b25 | ahead: ARCHIBALD]]
+
+[[status: active | goal: scheme]]
 
 !The video stops on the monitor and Durand's face kissing Amber is frozen on the screen, and Suzie is crushed.
 
@@ -586,7 +564,9 @@ The game show set consists of a red outlined box on the floor and an electronic 
 
 !$7223.45 goes to $7224.
 
-[[beat: One more chance, after the sponsor | id: b26]]
+[[status: lost | goal: durand]]
+
+[[status: lost | goal: scheme]]
 
                 ARCHIBALD
     Don't fret. You have one more opportunity. But first a word from our sponsor.
@@ -595,13 +575,15 @@ The game show set consists of a red outlined box on the floor and an electronic 
 
 [[id: q4]]
 
-= An advertisement for the home version of the game.
+[[goal: sell the home game to | id: app | subject: ARCHIBALD | object: the viewer]]
+
+= Archibald sells the home version of the game.
 
 .INT. FAMILY LIVING ROOM - DAY
 
 [[id: s10]]
 
-[[beat: The home app turns children on each other | id: b27]]
+[[beat: The home app turns children on each other | id: b27 | ahead: ARCHIBALD]]
 
 !ARCHIBALD is standing in a living room. Five kids (MOA, RUSSEL, TEMPIE, LIZZY, OLIVER) standing around looking at their screens.
 
@@ -629,7 +611,7 @@ The game show set consists of a red outlined box on the floor and an electronic 
 
 [[id: q5]]
 
-= Suzie is led, step by step, to sell her grandmother.
+= Archibald sets out to make Suzie sell her grandmother.
 
 .INT. GAME SHOW SET - MOMENTS LATER
 
@@ -639,7 +621,7 @@ The game show set consists of a red outlined box on the floor and an electronic 
 
 ARCHIBALD is standing beside SUZIE.
 
-[[beat: Suzie plays on and picks C | id: b28]]
+[[beat: Suzie plays on and picks C | id: b28 | ahead: SUZIE]]
 
                 ARCHIBALD
     We're back. Suzie has a Grand total of 21,224. Do you go on or just keep what you got?
@@ -656,7 +638,11 @@ ARCHIBALD is standing beside SUZIE.
                 ARCHIBALD
     Show us C!
 
-[[beat: It is Nana | id: b29]]
+[[beat: It is Nana | id: b29 | ahead: ARCHIBALD]]
+
+[[goal: save | id: cure | subject: SUZIE | object: NANA]]
+
+[[goal: cash in | id: payout | subject: NANA | object: SUZIE | status: secret]]
 
 !NANA appears on the screen!
 
@@ -671,8 +657,6 @@ ARCHIBALD is standing beside SUZIE.
     Well. She raised me after my parents died. It wasn't easy. She never made a lot of money, but she would provide. And told me that someday, everyone would know my name. We would watch Moral Dilemma and argue who would be the best player.
 
 !Suzie is lost in a sad thought.
-
-[[beat: Nana's illness and the missing fourteen thousand | id: b30]]
 
                 ARCHIBALD
     But there is more to this story, isn't there?
@@ -696,7 +680,7 @@ ARCHIBALD is standing beside SUZIE.
 
 !Suzie quivers.
 
-[[beat: Suzie sells Nana for 325,000 | id: b31]]
+[[beat: Suzie sells Nana | id: b31 | ahead: ARCHIBALD]]
 
                 ARCHIBALD
     Let it not be said that Archibald Feinious Duke is a kind man. Your relationship with your nana is precious. You can walk away with the money and let her live out her few remaining weeks; maybe even months or earn an additional 325 thousand by letting your Nan be the next victim.
@@ -710,7 +694,7 @@ ARCHIBALD is standing beside SUZIE.
         (subdued)
     Yes.
 
-[[beat: Suzie risks it on Nana's video | id: b32]]
+[[status: abandoned | goal: cure]]
 
                 ARCHIBALD
     You know what I'm going to ask. 325,000 is a lot of money. Do we risk it for more?
@@ -731,8 +715,6 @@ ARCHIBALD is standing beside SUZIE.
                 ARCHIBALD
     Thomas, show us Nana's video.
 
-[[beat: Nana's video: she already agreed to die | id: b33]]
-
 !INSERT - NANA VIDEO
 
                 NANA
@@ -746,7 +728,7 @@ ARCHIBALD is standing beside SUZIE.
 
 !BACK TO SCENE
 
-[[beat: The million-dollar offer and its catch | id: b34]]
+[[beat: The million-dollar offer and its catch | id: b34 | ahead: ARCHIBALD]]
 
                 ARCHIBALD
     I'm afraid her desire to end it really lowered the value of the relationship. It is now worth 50,000.
@@ -777,7 +759,7 @@ ARCHIBALD is standing beside SUZIE.
         (impressed)
     AND You would have to watch her suffer. We will give you the ability to stop her suffering at any time, but for up to five days, you will earn 200,000 dollars for each day of her suffering.
 
-[[beat: Suzie resists | id: b35]]
+[[beat: Suzie resists | id: b35 | ahead: SUZIE]]
 
 !Suzie looks up at her Nana's smiling face and back to Archibald.
 
@@ -787,7 +769,7 @@ ARCHIBALD is standing beside SUZIE.
                 ARCHIBALD
     We already established the kind of person you are. Now we are determining the price.
 
-[[beat: Archibald works on her until she breaks | id: b36]]
+[[beat: Archibald names her price | id: b36 | ahead: ARCHIBALD]]
 
 !Lost, Suzie looks around the room frantically. Archibald starts to circle.
 
@@ -822,6 +804,8 @@ ARCHIBALD is standing beside SUZIE.
                 SUZIE
     Because they think they know human nature better than The AI.
 
+[[beat: Pride works where greed did not | id: b47 | ahead: ARCHIBALD]]
+
                 ARCHIBALD
     Yet here you are. Making the determination on the largest payout in show history. Are you the winning contestant with the largest potential payout or just another victim of your own cowardness?
 
@@ -845,8 +829,6 @@ ARCHIBALD is standing beside SUZIE.
                 SUZIE
     Okay.
 
-[[beat: Suzie agrees on the record | id: b37]]
-
                 ARCHIBALD
     Do your formally agree to be a winner and abide by the Moral Dilemma decision and allow your Nana to suffer for the largest payout in show history?
 
@@ -859,6 +841,8 @@ ARCHIBALD is standing beside SUZIE.
                 SUZIE
         (shouts)
     It's a million dollars! Yes!
+
+[[status: won | goal: corrupt]]
 
 !Archibald turns directly into the camera.
 
@@ -878,7 +862,9 @@ The game show set consists of a red outlined box on the floor and an electronic 
 
 NANA is at the contestant podium. SUZIE and ARCHIBALD (video) are on the screen as one of Nana's victims. There is a $150,000 under the picture. ARCHIBALD (Host in different clothes)
 
-[[beat: The reveal: Nana was the contestant all along | id: b38]]
+[[beat: Nana was the contestant all along | id: b38 | ahead: NANA]]
+
+[[status: active | goal: payout]]
 
                 ARCHIBALD (FROM THE MONITOR)
     Do you hear her, Nana? She sold you out.
@@ -886,11 +872,11 @@ NANA is at the contestant podium. SUZIE and ARCHIBALD (video) are on the screen 
                 NANA
     Oh, Suzie! How could you give me up?
 
-[[beat: Suzie is taken away | id: b39]]
-
 !On the monitor, three PAB soldiers move into Suzie's house. They exit a moment later with her heartbroken and beaten, she doesn't resist. The OFFICER draws out her gun, turns towards the camera, and gives a signal to cut the feed. The video turns into an exceedingly happy face of Archibald.
 
-[[beat: Nana shrugs it off and Suzie's value drops | id: b40]]
+[[status: lost | goal: money]]
+
+[[beat: Archibald turns the loss on Nana | id: b40 | ahead: ARCHIBALD]]
 
                 ARCHIBALD
     When we filmed her, I really thought that she would do what's best for you. Oh well. Kids! What are you going to do?
@@ -903,13 +889,15 @@ NANA is at the contestant podium. SUZIE and ARCHIBALD (video) are on the screen 
 
 !The dollars below Suzie's picture scroll down to $10,000.
 
+[[status: lost | goal: payout]]
+
             >CUT TO STATIC:
 
 .INT. GAME SHOW SET - CONTINUOUS
 
 [[id: s13]]
 
-[[beat: The Narrator turns the question on the viewer | id: b41]]
+[[beat: The Narrator turns the question on the viewer | id: b41 | ahead: NARRATOR]]
 
 !Static races across the screen. NARRATOR appears; the set is empty.
 
