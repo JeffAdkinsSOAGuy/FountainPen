@@ -262,12 +262,15 @@ function setRail(which: 'outline' | 'goals' | 'proposals') {
 const store = { get: (k: string) => { try { return localStorage.getItem(k) ?? ''; } catch { return ''; } },
   set: (k: string, v: string) => { try { v ? localStorage.setItem(k, v) : localStorage.removeItem(k); } catch { /* storage unavailable */ } } };
 
+/** Settings built in from a local .env file by build.mjs. Empty in any shared copy. */
+let builtIn: { key?: string; model?: string } = {};
+
 async function findBeats() {
-  const key = $<HTMLInputElement>('api-key').value.trim(), model = $<HTMLInputElement>('api-model').value.trim();
+  const typed = $<HTMLInputElement>('api-key').value.trim(), key = typed || builtIn.key || '', model = $<HTMLInputElement>('api-model').value.trim();
   const status = $('agent-status');
-  if (!key) { status.textContent = 'Enter your Anthropic API key first.'; return; }
+  if (!key) { status.textContent = 'Enter your Anthropic API key first, or put it in a .env file and rebuild.'; return; }
   store.set('fp-model', model);
-  store.set('fp-key', $<HTMLInputElement>('api-remember').checked ? key : '');
+  store.set('fp-key', $<HTMLInputElement>('api-remember').checked ? typed : '');
   run = new AbortController();
   $('agent-start').hidden = true; $('agent-stop').hidden = false;
   status.textContent = 'Sending the script…';
@@ -378,6 +381,10 @@ function start() {
   $('agent-stop').addEventListener('click', () => run?.abort());
   $('agent-cancel').addEventListener('click', () => { run?.abort(); $<HTMLDialogElement>('agent-dialog').close(); });
   $('save').addEventListener('click', save);
+  try { builtIn = JSON.parse($('config').textContent || '{}') ?? {}; } catch { builtIn = {}; }
+  $('api-from-env').hidden = !builtIn.key;
+  if (builtIn.key) $<HTMLInputElement>('api-key').placeholder = 'Using the key from .env';
+  if (builtIn.model) $<HTMLInputElement>('api-model').value = builtIn.model;
   $<HTMLInputElement>('api-key').value = store.get('fp-key');
   $<HTMLInputElement>('api-remember').checked = !!store.get('fp-key');
   if (store.get('fp-model')) $<HTMLInputElement>('api-model').value = store.get('fp-model');

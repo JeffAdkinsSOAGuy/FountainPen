@@ -26,7 +26,19 @@ Then open `dist/fountainpen.html` in a browser. Use **Open script**, or drag a `
 - Accepting writes a Cascade note into the script. The script's own text is never changed.
 - **Save changes** writes the file back to disk.
 
-The key is sent only to `api.anthropic.com`, and is kept in the browser only if you tick the box. Each run is billed to your key. This only works from your own built copy, not from a hosted preview.
+### Saving your API key
+
+So that you do not have to paste the key each time:
+
+1. Copy `.env.example` to a new file named `.env` in the same folder.
+2. Put your key after `ANTHROPIC_API_KEY=`.
+3. Run `npm run build`.
+
+The key is then built into your own `dist/fountainpen.html`, and the key box in **Find beats** can be left empty. `.env` and `dist` are both in `.gitignore`, so neither is committed or pushed. Because the built file contains your key, do not send `dist/fountainpen.html` to anyone.
+
+Without a `.env` file, type the key into the box. Tick **Remember this key in this browser** to keep it there.
+
+The key is sent only to `api.anthropic.com`. Each run is billed to your key. This only works from your own built copy, not from a hosted preview.
 
 ## Test it
 
