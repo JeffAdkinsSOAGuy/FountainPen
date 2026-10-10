@@ -165,3 +165,18 @@ test('proposals write resumes, goal links and stages as v0.3 notes', () => {
   assert.deepEqual(alone.diagnostics, []);
   assert.deepEqual([alone.stats.sequences, alone.children.find(c => c.type === 'section').resumes], [1, undefined]);
 });
+test('a partly marked script still gets sequences for its unmarked stretch', () => {
+  const t = 'Title: T\nStructure: act, sequence\n\n# Act One\n\n## The Arrival\n\n[[id: q1]]\n\nINT. A - DAY\n\nShe arrives.\n\nINT. B - DAY\n\nHe schemes.\n\nINT. A - DAY\n\nShe finds out.\n';
+  const doc = parse(t), run = startRun(t, doc);
+  assert.match(partMessage(run), /already marked some sequences[\s\S]*Sequences so far:\nnone yet/);
+  const a = readReply([
+    '{"kind":"sequence","line":10,"id":"dup","title":"Duplicate","synopsis":"","reason":""}',     // the writer already starts one here
+    '{"kind":"sequence","line":14,"id":"scheme","title":"The Scheme","synopsis":"He plans it.","reason":""}',
+    '{"kind":"resume","line":18,"sequence":"q1","reason":""}',
+  ].join('\n'), t, doc);
+  assert.deepEqual(a.proposals.map(p => [p.kind, p.line]), [['sequence', 14], ['resume', 18]]);
+  assert.equal(a.dropped.length, 1);
+  const out = parse(apply(t, a.proposals).text);
+  assert.deepEqual(out.diagnostics, []);
+  assert.deepEqual(out.children[0].children.filter(c => c.type === 'section').map(s => [s.depth, s.resumes ?? s.id]), [[2, 'q1'], [2, 'scheme'], [2, 'q1']]);
+});

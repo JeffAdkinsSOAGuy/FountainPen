@@ -96,7 +96,7 @@ SPINE AND STAGE. A spine is a story arc, such as the Hero's Journey: an ordered 
 
 HOW YOU ARE GIVEN THE SCRIPT
 
-The script comes in parts, in order, a few scenes at a time. With each part you are given the ledger: the story so far, the agents, the goals with their status and place in the tree, the sequences so far with their ids, the sequence that is open, and the beat in progress. You are also told whether to propose sequences, and whether a spine is in use. Read the ledger first. A goal set up in an earlier part often decides what a moment in this part means. A new part is not a new sequence, a new beat or a new goal.
+The script comes in parts, in order, a few scenes at a time. With each part you are given the ledger: the story so far, the agents, the goals with their status and place in the tree, the sequences so far with their ids, the sequence that is open, and the beat in progress. You are also told how far the writer has already marked sequences, and whether a spine is in use. Read the ledger first. A goal set up in an earlier part often decides what a moment in this part means. A new part is not a new sequence, a new beat or a new goal.
 
 In each part, [N] stands in front of every line where a mark may be placed. A mark goes immediately before that line. You may only use bracketed numbers from the current part. A beat that starts when a character speaks goes before that character's name. If something turns in the middle of a speech or a paragraph, mark it at the next bracketed line. The part may already contain marks, written inside double square brackets, and lines starting with # (headings) or = (synopses). Treat existing marks as decided: do not repeat them and do not contradict them.
 
@@ -126,7 +126,7 @@ Rules for the fields:
 - "line" is a bracketed number from the current part.
 - Every "id" is a short lowercase word, or words joined by hyphens, of at most 32 characters, and is unique in the script: never reuse an id from the ledger, for a goal or a sequence.
 - Name agents exactly as the script names them in character cues, in capitals.
-- Propose "sequence" and "resume" objects only if you are told to propose sequences. A resume names the id of an earlier sequence from the ledger that is not the open one. Once the first sequence begins, everything after it belongs to a sequence, so an interlude needs one of its own or belongs to its neighbour.
+- Propose "sequence" and "resume" objects as the message for the part tells you to. A resume names the id of an earlier sequence from the ledger that is not the open one. Once the first sequence begins, everything after it belongs to a sequence, so an interlude needs one of its own or belongs to its neighbour.
 - "status" on a goal is "secret" or "active". Declare a goal at the line where it is created. If it is already held when the story opens, declare it where its holder first comes into play, and do not invent a moment of creation.
 - A status object records a change to a goal from the ledger or from this part: "active", "won", "lost" or "abandoned", at the line where it happens. Follow the order of the script as the audience sees it, not the order of events in story time. A goal that has not resolved gets no status change, and a goal that has ended gets no further change.
 - Word "want" so that subject, want and object read as one sentence. For SUZIE wants to cash in DURAND, the want is: cash in. Do not put quotation marks in it, and do not repeat the object inside it.
@@ -179,6 +179,8 @@ export interface Run {
   /** Every sequence so far, marked or proposed, in order. */ sequences: Array<{ id: string; title: string }>;
   /** The id of the open sequence, if any. */ open: string;
   stages: Set<string>;
+  /** Lines where the writer's own sequence headings take effect, and those sequences. */
+  marked: Set<number>; markedSequences: Array<{ id: string; title: string }>;
 }
 
 export function startRun(text: string, doc: CascadeDoc, targetWords = 5000): Run {
@@ -196,6 +198,10 @@ export function startRun(text: string, doc: CascadeDoc, targetWords = 5000): Run
     goals: new Map(doc.goals.map(g => [g.id, { sentence: sentence(g), status: g.status, line: g.line, object: g.object, for: g.for, from: g.from }])),
     sequence: '', beat: '', sequences: [], open: '', alias: new Map(),
     stages: new Set(doc.spines.flatMap(sp => sp.stages.map(st => st.id))),
+    // the first place a mark could go after each of the writer's sequence headings
+    marked: new Set(walk(doc.children, 'section').filter((x: any) => x.level === 'sequence' || !doc.levels.length)
+      .map((x: any) => [...ok].filter(n => n > x.line).sort((a, b) => a - b)[0]).filter(Boolean)),
+    markedSequences: walk(doc.children, 'section').filter((x: any) => x.id).map((x: any) => ({ id: x.id, title: x.title })),
   };
 }
 
@@ -218,7 +224,9 @@ export function partMessage(run: Run): string | null {
   return [
     run.doc.titlePage['title'] ? `Title: ${run.doc.titlePage['title']}` : '',
     `This is part ${run.k + 1} of ${n}${run.k === n - 1 ? ', the last part' : ''}.`,
-    run.doc.stats.sequences ? 'The script has sequence headings of its own, so do not propose sequence or resume objects.' : 'The script has no sequence headings of its own, so propose sequences, and resumes where an earlier sequence returns.',
+    run.doc.stats.sequences
+      ? 'The writer has already marked some sequences: they are the headings in the script and the ones listed in the ledger. Treat those as decided. Propose a sequence only where the story turns to a conflict or goal that no existing heading introduces, which is usual in a stretch the writer has not marked yet. Propose a resume where an earlier sequence returns.'
+      : 'The script has no sequence headings of its own, so propose sequences, and resumes where an earlier sequence returns.',
     spine,
     '<ledger>',
     `Story so far: ${run.summary || (run.k === 0 ? 'Nothing yet. This is the opening.' : 'No summary was carried over.')}`,
@@ -263,7 +271,7 @@ export function absorb(run: Run, raw: string): void {
       run.proposals.push({ kind, line, text: str(o.text), ahead: str(o.ahead) || undefined, stage, reason });
       run.beat = str(o.text) + (str(o.ahead) ? ` (${str(o.ahead)} ahead)` : '');
     } else if (kind === 'sequence') {
-      if (run.doc.stats.sequences) { run.dropped.push(`Dropped the ${what}: this script already has sequences.`); return; }
+      if (run.marked.has(line)) { run.dropped.push(`Dropped the ${what}: the writer already starts a sequence there.`); return; }
       if (!str(o.title)) return;
       const title = str(o.title).replace(/^#+\s*/, '');
       let id = str(o.id).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32);
@@ -273,9 +281,9 @@ export function absorb(run: Run, raw: string): void {
       run.sequences.push({ id, title }); run.open = id;
       run.sequence = `${id}: ${title}` + (str(o.synopsis) ? ` (${str(o.synopsis)})` : ''); run.beat = '';
     } else if (kind === 'resume') {
-      if (run.doc.stats.sequences) { run.dropped.push(`Dropped the ${what}: this script already has sequences.`); return; }
+      if (run.marked.has(line)) { run.dropped.push(`Dropped the ${what}: the writer already starts a sequence there.`); return; }
       const want = str(o.sequence), id = run.alias.get(want) ?? want;
-      const target = run.sequences.find(x => x.id === id);
+      const target = run.sequences.find(x => x.id === id) ?? run.markedSequences.find(x => x.id === id);
       if (!target) { run.dropped.push(`Dropped the ${what}: no earlier sequence has that id.`); return; }
       if (run.open === id) return;                                   // it never paused: nothing to mark
       run.proposals.push({ kind: 'resume', line, sequence: id, title: target.title, reason });
