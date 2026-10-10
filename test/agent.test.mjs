@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { parse } from '../dist/parser.mjs';
-import { readReply, insertionLines, numberedScript } from '../dist/agent.mjs';
+import { readReply, insertionLines, numberedScript, jsonObjects } from '../dist/agent.mjs';
 import { apply } from '../dist/edit.mjs';
 
 const read = f => readFileSync(new URL('./fixtures/' + f, import.meta.url), 'utf8');
@@ -70,4 +70,23 @@ test('a sequence adds a Structure line and new IDs never collide', () => {
   const bare = apply('INT. A - DAY\n\nHe waits.\n', [{ kind: 'sequence', line: 1, title: 'One', synopsis: '', reason: '' }]);
   assert.deepEqual(parse(bare.text).levels, ['sequence']);
   assert.equal(parse(bare.text).stats.scenes, 1);
+});
+test('a reply is read whatever its layout', () => {
+  const a = { kind: 'beat', line: 3, text: 'He says "no" {twice}', reason: 'a } brace' }, b = { kind: 'beat', line: 6, text: 'She leaves', reason: '' };
+  const t = 'INT. A - DAY\n\nBOB\nNo.\n\nAnn leaves.\n';
+  const shapes = {
+    lines: JSON.stringify(a) + '\n' + JSON.stringify(b),
+    oneLine: JSON.stringify(a) + ' ' + JSON.stringify(b),
+    array: JSON.stringify([a, b]),
+    pretty: JSON.stringify(a, null, 2) + '\n' + JSON.stringify(b, null, 2),
+    fenced: 'Here you go:\n```json\n' + JSON.stringify(a) + '\n' + JSON.stringify(b) + '\n```',
+    literalNewline: JSON.stringify(a) + '\\n' + JSON.stringify(b),
+  };
+  for (const [name, raw] of Object.entries(shapes)) {
+    const r = readReply(raw, t, parse(t));
+    assert.deepEqual(r.proposals.map(p => p.text), ['He says "no" {twice}', 'She leaves'], name);
+    assert.equal(r.truncated, false, name);
+  }
+  const cut = jsonObjects(JSON.stringify(a) + '\n{"kind":"beat","li');
+  assert.deepEqual([cut.objects.length, cut.incomplete], [1, true]);
 });

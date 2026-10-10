@@ -16,6 +16,7 @@ let dirty = false;
 let pending: Proposal[] = [];
 let agents: AgentNote[] = [];
 let notes: string[] = [];
+let rawReply = '';
 let run: AbortController | null = null;
 let saveHandle: any = null;
 
@@ -71,7 +72,7 @@ function itemHtml(node: Item): string {
 }
 
 function load(newText: string, name: string, sample = false) {
-  text = newText; fileName = name; dirty = false; pending = []; agents = []; notes = []; saveHandle = null;
+  text = newText; fileName = name; dirty = false; pending = []; agents = []; notes = []; rawReply = ''; saveHandle = null;
   $('doc-sample').hidden = !sample;
   render(true);
 }
@@ -149,7 +150,7 @@ function proposalHtml(p: Proposal, i: number): string {
 }
 
 function renderProposals() {
-  const has = pending.length > 0 || agents.length > 0 || notes.length > 0;
+  const has = pending.length > 0 || agents.length > 0 || notes.length > 0 || rawReply !== '';
   $('rail-tabs').hidden = !has;
   $('tab-proposals').textContent = `Proposals (${pending.length})`;
   if (!has) { setRail('outline'); $('proposals').innerHTML = ''; return; }
@@ -166,7 +167,8 @@ function renderProposals() {
   const who = agents.length ? `<details class="p-ledger"><summary>Who the agent found (${agents.length})</summary><ul>${agents.map(a =>
     `<li><b>${esc(a.name)}</b> ${esc(a.about)}</li>`).join('')}</ul></details>` : '';
   const warn = notes.length ? `<details class="p-ledger p-notes"><summary>${plural(notes.length, 'note')} from this run</summary><ul>${notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul></details>` : '';
-  $('proposals').innerHTML = who + warn + (pending.length ? '' : '<p class="hint">Every proposal has been accepted or rejected.</p>') +
+  const rawBox = rawReply ? `<details class="p-ledger"><summary>What the agent sent back</summary><pre class="p-raw">${esc(rawReply)}</pre></details>` : '';
+  $('proposals').innerHTML = who + warn + rawBox + (pending.length ? '' : `<p class="hint">${dirty || !notes.length ? 'Every proposal has been accepted or rejected.' : 'This run produced no proposals.'}</p>`) +
     [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([line, idx]) => {
       const m = marks.find(x => x.line === line);
       return `<section class="p-group"><header><div><span class="o-level">${m ? (m.proposed ? 'proposed sequence' : 'sequence') : 'before any sequence'}</span>
@@ -222,7 +224,9 @@ async function findBeats() {
     const a = await analyse({ key, model, text, doc, signal: run.signal,
       onProgress: (_n, rows) => { status.textContent = `Reading the script… ${rows} findings so far.`; } });
     pending = a.proposals; agents = a.agents;
-    notes = [...a.dropped, ...(a.truncated ? ['The reply was cut off before it finished, so the end of the script may have no proposals.'] : [])];
+    rawReply = a.raw;
+    notes = [...a.dropped, ...(a.truncated ? ['The reply was cut off before it finished, so the end of the script may have no proposals.'] : []),
+      ...(a.proposals.length ? [] : [a.raw.trim() ? 'The reply had nothing in it that could be used as a proposal. Open "What the agent sent back" to see it.' : 'The reply was empty.'])];
     $<HTMLDialogElement>('agent-dialog').close();
     status.textContent = '';
     renderProposals(); setRail('proposals'); setPane('outline');

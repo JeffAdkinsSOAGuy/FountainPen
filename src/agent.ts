@@ -8,7 +8,7 @@ export type Proposal =
   | { kind: 'status'; line: number; goal: string; status: 'active' | 'won' | 'lost' | 'abandoned'; reason: string }
   | { kind: 'beat'; line: number; text: string; ahead?: string; reason: string };
 export interface AgentNote { name: string; about: string }
-export interface Analysis { agents: AgentNote[]; proposals: Proposal[]; dropped: string[]; truncated: boolean }
+export interface Analysis { agents: AgentNote[]; proposals: Proposal[]; dropped: string[]; truncated: boolean; raw: string }
 
 const lines = (text: string) => text.replace(/\r\n?/g, '\n').split('\n');
 const isMarkup = (t: string) => {
@@ -93,6 +93,26 @@ export function buildUserMessage(text: string, doc: CascadeDoc): string {
 const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
 const names = (v: unknown) => (Array.isArray(v) ? v.map(str) : str(v).split(',').map(s => s.trim())).filter(Boolean);
 
+/**
+ * Pull every complete top-level JSON object out of a reply, however it is laid out: one per line,
+ * pretty-printed, wrapped in an array or a code fence, or run together on one line.
+ */
+export function jsonObjects(raw: string): { objects: any[]; unreadable: number; incomplete: boolean } {
+  const objects: any[] = [];
+  let depth = 0, start = -1, inString = false, escaped = false, unreadable = 0;
+  for (let i = 0; i < raw.length; i++) {
+    const c = raw[i];
+    if (inString) { if (escaped) escaped = false; else if (c === '\\') escaped = true; else if (c === '"') inString = false; continue; }
+    if (depth > 0 && c === '"') inString = true;
+    else if (c === '{') { if (depth++ === 0) start = i; }
+    else if (c === '}' && depth > 0 && --depth === 0) {
+      try { objects.push(JSON.parse(raw.slice(start, i + 1))); } catch { unreadable++; }
+      start = -1;
+    }
+  }
+  return { objects, unreadable, incomplete: depth > 0 };
+}
+
 /** Turn the model's reply into checked proposals. Anything that cannot be placed safely is dropped, with a note. */
 export function readReply(raw: string, text: string, doc: CascadeDoc): Analysis {
   const ok = insertionLines(text, doc), L = lines(text);
@@ -105,10 +125,11 @@ export function readReply(raw: string, text: string, doc: CascadeDoc): Analysis 
   const agents: AgentNote[] = [], proposals: Proposal[] = [], dropped: string[] = [];
   let truncated = false;
 
-  const rows = raw.split('\n').map(l => l.trim()).filter(l => l.startsWith('{'));
-  rows.forEach((row, i) => {
-    let o: any;
-    try { o = JSON.parse(row); } catch { if (i === rows.length - 1) truncated = true; else dropped.push('A line of the reply could not be read.'); return; }
+  const found = jsonObjects(raw);
+  truncated = found.incomplete;
+  if (found.unreadable) dropped.push(`${found.unreadable} part${found.unreadable === 1 ? '' : 's'} of the reply could not be read.`);
+  found.objects.forEach((o: any) => {
+    if (!o || typeof o !== 'object') return;
     const kind = str(o.kind), reason = str(o.reason);
     if (kind === 'agent') { if (str(o.name)) agents.push({ name: str(o.name), about: str(o.about) }); return; }
     const what = kind === 'beat' ? `beat "${str(o.text)}"` : kind === 'goal' ? `goal "${str(o.id)}"` : kind === 'sequence' ? `sequence "${str(o.title)}"` : `status change for "${str(o.goal)}"`;
@@ -147,7 +168,7 @@ export function readReply(raw: string, text: string, doc: CascadeDoc): Analysis 
   for (const p of proposals) if (p.kind === 'goal' && p.for && !ids.has(p.for)) p.for = undefined;
   const order = { sequence: 0, beat: 1, status: 2, goal: 3 };
   proposals.sort((a, b) => a.line - b.line || order[a.kind] - order[b.kind]);
-  return { agents, proposals, dropped, truncated };
+  return { agents, proposals, dropped, truncated, raw };
 }
 
 export interface RunOptions {
@@ -155,18 +176,15 @@ export interface RunOptions {
   signal?: AbortSignal; onProgress?: (received: number, rows: number) => void;
 }
 
-/** Call the Anthropic Messages API from the browser and stream the reply. */
-export async function analyse(o: RunOptions): Promise<Analysis> {
+/** One streamed request. Returns the text and whether the model ran out of room. */
+async function stream(o: RunOptions, messages: Array<{ role: string; content: string }>, sofar: string): Promise<{ text: string; cut: boolean }> {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST', signal: o.signal,
     headers: {
       'content-type': 'application/json', 'x-api-key': o.key, 'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true',
     },
-    body: JSON.stringify({
-      model: o.model, max_tokens: 32000, stream: true, system: SYSTEM,
-      messages: [{ role: 'user', content: buildUserMessage(o.text, o.doc) }],
-    }),
+    body: JSON.stringify({ model: o.model, max_tokens: 16000, stream: true, system: SYSTEM, messages }),
   });
   if (!res.ok || !res.body) {
     let detail = '';
@@ -187,12 +205,34 @@ export async function analyse(o: RunOptions): Promise<Analysis> {
       try { ev = JSON.parse(line.slice(5)); } catch { continue; }
       if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') {
         out += ev.delta.text;
-        o.onProgress?.(out.length, out.split('\n').length - 1);
+        o.onProgress?.(sofar.length + out.length, jsonObjects(sofar + out).objects.length);
       } else if (ev.type === 'message_delta' && ev.delta?.stop_reason === 'max_tokens') cut = true;
       else if (ev.type === 'error') throw new Error(ev.error?.message ?? 'The API reported an error.');
     }
   }
-  const a = readReply(out, o.text, o.doc);
+  return { text: out, cut };
+}
+
+/**
+ * Call the Anthropic Messages API from the browser. A long script can need more room than one reply
+ * allows, so when a reply is cut off the agent is asked to carry on from its last complete finding.
+ */
+export async function analyse(o: RunOptions): Promise<Analysis> {
+  const first = { role: 'user', content: buildUserMessage(o.text, o.doc) };
+  let all = '', cut = false;
+  for (let round = 0; round < 8; round++) {
+    const messages = round === 0 ? [first] : [first, { role: 'assistant', content: all },
+      { role: 'user', content: 'Your reply was cut off. Carry on from exactly where it stopped, starting with the next JSON object. Do not repeat anything you have already given, and do not add any other text.' }];
+    const part = await stream(o, messages, all);
+    cut = part.cut;
+    if (!cut) { all += (all ? '\n' : '') + part.text; break; }
+    // keep only whole findings, so the next round starts on a clean boundary
+    const joined = all + (all ? '\n' : '') + part.text;
+    const end = joined.lastIndexOf('}');
+    if (end < 0 || end + 1 <= all.length) { all = joined; break; }     // no progress: stop asking
+    all = joined.slice(0, end + 1);
+  }
+  const a = readReply(all, o.text, o.doc);
   a.truncated = a.truncated || cut;
   return a;
 }
